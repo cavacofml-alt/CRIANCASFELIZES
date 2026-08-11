@@ -103,6 +103,46 @@ de grupo) fica de fora da v1; pode ser reconsiderado na Etapa 6
 
 Nada pendente da Etapa 3 neste momento.
 
+## Backlog de ideias futuras (fora das 10 etapas do CLAUDE.md)
+
+Lista trazida pelo utilizador em 2026-08-11. Nenhum destes itens está a
+ser construído agora — ficam aqui para não se perderem e serem
+discutidos quando fizer sentido (provavelmente depois da v1 estar
+validada na escola piloto, Etapa 8).
+
+1. **Contas reais com autenticação segura** — isto já é, em grande
+   parte, o que a Etapa 8 do CLAUDE.md cobre ("migração para dados
+   reais"). A autenticação em si (Supabase Auth) já é seguro desde a
+   Etapa 2; o que falta é ativar contas da escola a sério, o que só
+   pode acontecer depois da Etapa 7 (auditoria RGPD) estar concluída e
+   com consentimento assinado da escola. Não é um item novo — é um
+   lembrete de que a Etapa 8 já cobre isto.
+2. **Notificações push para o telemóvel** — item novo, fora do plano
+   atual. Hoje só há notificações *in-app* (o número vermelho no
+   menu), que só aparecem quando alguém abre a aplicação. Para
+   notificar mesmo com a app fechada é preciso: ou uma app nativa, ou
+   transformar isto numa PWA com Web Push + um serviço de envio (ex.
+   Firebase Cloud Messaging, tem nível gratuito mas é infraestrutura
+   nova). Por decidir o âmbito quando chegar a altura.
+3. **Base de dados partilhada entre utilizadores diferentes** — a
+   confirmar o que o utilizador quer dizer com isto, porque já existe
+   uma base de dados só (Supabase Postgres), partilhada por todos os
+   utilizadores da mesma escola, com o RLS a decidir o que cada um vê.
+   Se quer dizer "várias escolas na mesma aplicação" isso já é a
+   Etapa 10 (multi-tenant) do CLAUDE.md. Se quer dizer "ver
+   atualizações ao vivo sem recarregar a página" (ex. uma mensagem
+   nova aparecer sozinha), isso é um item novo — usar o Supabase
+   Realtime — e ainda não está implementado (hoje é preciso navegar/
+   atualizar para ver dados novos).
+4. **Aplicação nativa iOS/Android para publicar nas stores** — item
+   novo e grande, fora do plano atual. Implica: conta de developer
+   Apple (~99 USD/ano) e Google Play (~25 USD uma vez, dado que o
+   CLAUDE.md pede para não introduzir custos sem discutir primeiro), e
+   escolher tecnologia (ex. React Native, ou embrulhar a app web numa
+   PWA instalável, mais barato mas com menos acesso a funcionalidades
+   do telemóvel). Por decidir âmbito, tecnologia e custos quando
+   chegar a altura.
+
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
 - 🔑 **Rodar a chave `service_role` do Supabase.** Foi colada nesta
