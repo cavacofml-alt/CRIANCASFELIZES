@@ -20,6 +20,12 @@ export function PainelNav({
         Mural
       </Link>
       <Link
+        href="/painel/presencas"
+        className="transition-colors hover:text-black dark:hover:text-zinc-50"
+      >
+        Presenças
+      </Link>
+      <Link
         href="/painel/mensagens"
         className="flex items-center gap-1.5 transition-colors hover:text-black dark:hover:text-zinc-50"
       >
