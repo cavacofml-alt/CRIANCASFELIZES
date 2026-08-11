@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { formatarDataHoraPT } from "@/lib/data";
+import { corTurma, indicePorTurma } from "@/lib/turmas";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
+import { PageFade, StaggerList, StaggerItem } from "../motion";
 import { NovoAvisoForm } from "./novo-aviso-form";
 
 export default async function MuralPage() {
@@ -37,6 +39,7 @@ export default async function MuralPage() {
 
   const nomeAutor = new Map((autores ?? []).map((a) => [a.id, a.nome]));
   const nomeTurma = new Map((turmas ?? []).map((t) => [t.id, t.nome]));
+  const indiceTurma = indicePorTurma(turmas ?? []);
 
   // Visitar o mural é o que "lê" as notificações de avisos.
   await supabase.rpc("marcar_notificacoes_tipo_lidas", { tipo_param: "aviso" });
@@ -46,21 +49,24 @@ export default async function MuralPage() {
   const podePublicar = perfil.papel === "admin" || perfil.papel === "staff";
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
+    <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
               Mural de avisos
             </h1>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
               {perfil.nome}
             </p>
           </div>
           <BotaoSair />
         </header>
 
-        <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
+        <PainelNav
+          contagemAvisos={contagemAvisos}
+          contagemMensagens={contagemMensagens}
+        />
 
         {podePublicar && (
           <NovoAvisoForm
@@ -71,36 +77,51 @@ export default async function MuralPage() {
           />
         )}
 
-        <section className="flex flex-col gap-4">
-          {avisos && avisos.length > 0 ? (
-            avisos.map((a) => (
-              <article
-                key={a.id}
-                className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="font-semibold text-black dark:text-zinc-50">
-                    {a.titulo}
-                  </h2>
-                  <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
-                    {a.turma_id
-                      ? (nomeTurma.get(a.turma_id) ?? "Turma")
-                      : "Toda a escola"}
-                  </span>
-                </div>
-                <p className="mt-2 whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
-                  {a.corpo}
-                </p>
-                <p className="mt-3 text-xs text-zinc-400">
-                  {nomeAutor.get(a.autor_id) ?? "—"} ·{" "}
-                  {formatarDataHoraPT(a.criado_em)}
-                </p>
-              </article>
-            ))
-          ) : (
-            <p className="text-sm text-zinc-500">Ainda não há avisos.</p>
-          )}
-        </section>
+        <PageFade>
+          <StaggerList className="flex flex-col gap-4">
+            {avisos && avisos.length > 0 ? (
+              avisos.map((a) => {
+                const cor = a.turma_id
+                  ? corTurma(indiceTurma.get(a.turma_id) ?? 0)
+                  : null;
+                return (
+                  <StaggerItem
+                    key={a.id}
+                    className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="font-semibold text-brand-ink dark:text-brand-ink-dark">
+                        {a.titulo}
+                      </h2>
+                      <span
+                        className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          cor
+                            ? `${cor.bg} ${cor.texto}`
+                            : "bg-brand-accent-soft text-brand-accent dark:bg-brand-accent-soft-dark"
+                        }`}
+                      >
+                        {a.turma_id
+                          ? (nomeTurma.get(a.turma_id) ?? "Turma")
+                          : "Toda a escola"}
+                      </span>
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-brand-ink/90 dark:text-brand-ink-dark/90">
+                      {a.corpo}
+                    </p>
+                    <p className="mt-3 text-xs text-brand-muted dark:text-brand-muted-dark">
+                      {nomeAutor.get(a.autor_id) ?? "—"} ·{" "}
+                      {formatarDataHoraPT(a.criado_em)}
+                    </p>
+                  </StaggerItem>
+                );
+              })
+            ) : (
+              <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                Ainda não há avisos.
+              </p>
+            )}
+          </StaggerList>
+        </PageFade>
       </div>
     </main>
   );

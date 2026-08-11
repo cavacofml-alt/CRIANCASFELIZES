@@ -2,10 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-
-const CAMPO =
-  "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50";
+import { CAMPO, BOTAO_PRIMARIO } from "../estilos";
 
 export function NovoAvisoForm({
   perfilId,
@@ -53,16 +52,19 @@ export function NovoAvisoForm({
   }
 
   return (
-    <form
+    <motion.form
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
       onSubmit={publicar}
-      className="flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+      className="flex flex-col gap-3 rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
     >
-      <h2 className="font-semibold text-black dark:text-zinc-50">
+      <h2 className="font-semibold text-brand-ink dark:text-brand-ink-dark">
         Publicar novo aviso
       </h2>
 
       {papel === "admin" && (
-        <label className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-sm text-brand-muted dark:text-brand-muted-dark">
           Destinatário
           <select
             value={turmaId}
@@ -80,7 +82,7 @@ export function NovoAvisoForm({
       )}
 
       {papel === "staff" && turmas.length > 1 && (
-        <label className="flex flex-col gap-1 text-sm text-zinc-600 dark:text-zinc-400">
+        <label className="flex flex-col gap-1 text-sm text-brand-muted dark:text-brand-muted-dark">
           Turma
           <select
             value={turmaId}
@@ -110,15 +112,16 @@ export function NovoAvisoForm({
         className={CAMPO}
       />
 
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
 
-      <button
+      <motion.button
+        whileTap={{ scale: 0.96 }}
         type="submit"
         disabled={aEnviar}
-        className="self-start rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-zinc-50 dark:text-black"
+        className={`self-start ${BOTAO_PRIMARIO}`}
       >
         {aEnviar ? "A publicar…" : "Publicar"}
-      </button>
-    </form>
+      </motion.button>
+    </motion.form>
   );
 }
