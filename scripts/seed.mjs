@@ -41,6 +41,8 @@ async function limpar() {
   console.log("A limpar dados fictícios anteriores…");
 
   // A ordem respeita as chaves estrangeiras.
+  await db.from("fotos").delete().neq("id", ZERO_UUID);
+  await db.from("relatorios_diarios").delete().neq("id", ZERO_UUID);
   await db.from("presencas").delete().neq("id", ZERO_UUID);
   await db.from("notificacoes").delete().neq("id", ZERO_UUID);
   await db.from("mensagens").delete().neq("id", ZERO_UUID);
@@ -254,6 +256,66 @@ async function main() {
       levantado_por_id: ids.encLeonor,
       levantado_por_nome: "Diogo Pinto",
       registado_saida_por: ids.staffGirassois,
+    },
+  ]);
+
+  console.log("A criar relatórios diários (dia fixo, 2026-08-10)…");
+  await inserir("relatorios_diarios", [
+    {
+      escola_id: arcoIris.id,
+      crianca_id: matilde.id,
+      data: "2026-08-10",
+      pequeno_almoco: "comeu_tudo",
+      almoco: "comeu_metade",
+      lanche: "comeu_tudo",
+      sono_inicio: "13:00",
+      sono_fim: "14:30",
+      fraldas_trocadas: 2,
+      notas: "Dia tranquilo, brincou muito no recreio.",
+      registado_por: ids.staffBorboletas,
+    },
+    {
+      escola_id: arcoIris.id,
+      crianca_id: tomas.id,
+      data: "2026-08-10",
+      pequeno_almoco: "comeu_pouco",
+      fraldas_trocadas: 1,
+      registado_por: ids.staffBorboletas,
+    },
+    {
+      escola_id: arcoIris.id,
+      crianca_id: leonor.id,
+      data: "2026-08-10",
+      pequeno_almoco: "comeu_tudo",
+      almoco: "comeu_tudo",
+      lanche: "comeu_metade",
+      sono_inicio: "12:45",
+      sono_fim: "14:15",
+      fraldas_trocadas: 3,
+      notas: "Precisou de mais colo para adormecer hoje.",
+      registado_por: ids.staffGirassois,
+    },
+  ]);
+
+  console.log("A criar uma foto de exemplo (turma Borboletas)…");
+  // PNG 1x1 transparente — só para haver um ficheiro real a testar as
+  // políticas de Storage, não uma fotografia a sério.
+  const pngExemplo = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+    "base64",
+  );
+  const caminhoFoto = `${arcoIris.id}/${borboletas.id}/exemplo.png`;
+  const { error: errUpload } = await db.storage
+    .from("fotos-turmas")
+    .upload(caminhoFoto, pngExemplo, { contentType: "image/png", upsert: true });
+  if (errUpload) throw new Error(`Upload de foto de exemplo: ${errUpload.message}`);
+  await inserir("fotos", [
+    {
+      escola_id: arcoIris.id,
+      turma_id: borboletas.id,
+      caminho: caminhoFoto,
+      legenda: "Foto de exemplo (fictícia).",
+      autor_id: ids.staffBorboletas,
     },
   ]);
 
