@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { BotaoSair } from "./botao-sair";
 import { PainelNav } from "./nav";
+import { PageFade, StaggerList, StaggerItem } from "./motion";
 
 const ETIQUETA_PAPEL: Record<string, string> = {
   admin: "Administração",
@@ -29,11 +30,11 @@ export default async function PainelPage() {
 
   if (!perfil) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-zinc-50 px-4 text-center dark:bg-black">
-        <h1 className="text-2xl font-bold text-black dark:text-zinc-50">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-brand-bg px-4 text-center dark:bg-brand-bg-dark">
+        <h1 className="text-2xl font-bold text-brand-ink dark:text-brand-ink-dark">
           Conta sem perfil atribuído
         </h1>
-        <p className="max-w-md text-zinc-600 dark:text-zinc-400">
+        <p className="max-w-md text-brand-muted dark:text-brand-muted-dark">
           A sua conta existe mas ainda não foi associada a uma escola. Contacte
           a administração. Até lá, não tem acesso a qualquer dado.
         </p>
@@ -61,70 +62,80 @@ export default async function PainelPage() {
     await contarNotificacoesPorTipo();
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
+    <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
               {escola?.nome ?? "Escola"}
             </h1>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
               {perfil.nome} · {ETIQUETA_PAPEL[perfil.papel] ?? perfil.papel}
             </p>
           </div>
           <BotaoSair />
         </header>
 
-        <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
+        <PainelNav
+          contagemAvisos={contagemAvisos}
+          contagemMensagens={contagemMensagens}
+        />
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-3 font-semibold text-black dark:text-zinc-50">
-            Turmas visíveis para si ({turmas?.length ?? 0})
-          </h2>
-          {turmas && turmas.length > 0 ? (
-            <ul className="flex flex-wrap gap-2">
-              {turmas.map((t) => (
-                <li
-                  key={t.id}
-                  className="rounded-full bg-zinc-100 px-3 py-1 text-sm text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"
-                >
-                  {t.nome}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-zinc-500">Nenhuma turma visível.</p>
-          )}
-        </section>
+        <PageFade>
+          <StaggerList className="flex flex-col gap-6">
+            <StaggerItem className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark">
+              <h2 className="mb-3 font-semibold text-brand-ink dark:text-brand-ink-dark">
+                Turmas visíveis para si ({turmas?.length ?? 0})
+              </h2>
+              {turmas && turmas.length > 0 ? (
+                <ul className="flex flex-wrap gap-2">
+                  {turmas.map((t) => (
+                    <li
+                      key={t.id}
+                      className="rounded-full bg-brand-accent-soft px-3 py-1 text-sm font-medium text-brand-accent dark:bg-brand-accent-soft-dark"
+                    >
+                      {t.nome}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                  Nenhuma turma visível.
+                </p>
+              )}
+            </StaggerItem>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="mb-3 font-semibold text-black dark:text-zinc-50">
-            Crianças visíveis para si ({criancas?.length ?? 0})
-          </h2>
-          {criancas && criancas.length > 0 ? (
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
-              {criancas.map((c) => (
-                <li
-                  key={c.id}
-                  className="flex items-center justify-between py-2.5"
-                >
-                  <span className="text-zinc-900 dark:text-zinc-100">
-                    {c.nome}
-                  </span>
-                  <span className="text-sm text-zinc-500">
-                    {turmas?.find((t) => t.id === c.turma_id)?.nome ?? "—"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-zinc-500">Nenhuma criança visível.</p>
-          )}
-        </section>
+            <StaggerItem className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark">
+              <h2 className="mb-3 font-semibold text-brand-ink dark:text-brand-ink-dark">
+                Crianças visíveis para si ({criancas?.length ?? 0})
+              </h2>
+              {criancas && criancas.length > 0 ? (
+                <ul className="divide-y divide-brand-border dark:divide-brand-border-dark">
+                  {criancas.map((c) => (
+                    <li
+                      key={c.id}
+                      className="flex items-center justify-between py-2.5"
+                    >
+                      <span className="text-brand-ink dark:text-brand-ink-dark">
+                        {c.nome}
+                      </span>
+                      <span className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                        {turmas?.find((t) => t.id === c.turma_id)?.nome ?? "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                  Nenhuma criança visível.
+                </p>
+              )}
+            </StaggerItem>
+          </StaggerList>
+        </PageFade>
 
-        <p className="text-center text-xs text-zinc-400">
-          Etapa 2 — dados fictícios. Esta lista é filtrada pela base de dados
-          (RLS), não pela aplicação.
+        <p className="text-center text-xs text-brand-muted dark:text-brand-muted-dark">
+          Esta lista é filtrada pela base de dados (RLS), não pela aplicação.
         </p>
       </div>
     </main>

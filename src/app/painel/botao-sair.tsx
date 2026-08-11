@@ -16,7 +16,7 @@ export function BotaoSair() {
   return (
     <button
       onClick={sair}
-      className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+      className="shrink-0 rounded-full border border-brand-border px-3 py-1.5 text-sm font-medium text-brand-muted transition-colors hover:bg-brand-accent-soft hover:text-brand-ink dark:border-brand-border-dark dark:text-brand-muted-dark dark:hover:bg-brand-accent-soft-dark dark:hover:text-brand-ink-dark"
     >
       Sair
     </button>
