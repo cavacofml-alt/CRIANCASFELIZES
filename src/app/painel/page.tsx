@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { contarNotificacoesNaoLidas } from "@/lib/notificacoes";
 import { BotaoSair } from "./botao-sair";
+import { PainelNav } from "./nav";
 
 const ETIQUETA_PAPEL: Record<string, string> = {
   admin: "Administração",
@@ -55,6 +57,8 @@ export default async function PainelPage() {
     .select("id, nome, data_nascimento, turma_id")
     .order("nome");
 
+  const contagemNaoLidas = await contarNotificacoesNaoLidas();
+
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
@@ -69,6 +73,8 @@ export default async function PainelPage() {
           </div>
           <BotaoSair />
         </header>
+
+        <PainelNav contagemNaoLidas={contagemNaoLidas} />
 
         <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="mb-3 font-semibold text-black dark:text-zinc-50">
