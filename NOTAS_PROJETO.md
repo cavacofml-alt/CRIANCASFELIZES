@@ -35,16 +35,35 @@ Atualizar sempre que surgir algo relevante que não pertença ao CLAUDE.md.
   de servidor, que corriam em UTC na Vercel; corrigido de forma
   centralizada em `src/lib/data.ts`, aplicado também ao mural e às
   mensagens que tinham o mesmo problema). Etapa fechada.
-- ⏳ Etapa 5 — relatórios diários (refeições, sesta, fraldas, notas —
-  editável ao longo do dia) e fotos por turma. **Implementada em
-  código**, ainda **por verificar pessoalmente pelo utilizador**: faltam
-  aplicar as migrations 0014 a 0017 no Supabase e testar no preview da
-  Vercel. Primeira vez que a aplicação usa Supabase Storage — bucket
-  privado `fotos-turmas`, políticas baseadas no caminho do ficheiro
-  (`<escola_id>/<turma_id>/...`), tratado com o mesmo cuidado das
-  políticas de tabela por ser código crítico novo. Testar em especial:
-  upload de uma foto a sério (não só a de exemplo do seed) e confirmar
-  que um encarregado só vê fotos da turma do seu educando.
+- ⏳ Etapa 5 — relatórios diários e fotos por turma. Migrations 0014 a
+  0017 aplicadas. **Parcialmente verificado**:
+  - ✅ Relatório diário: Ana preencheu o da Matilde, Carla confirmou
+    que só vê o relatório da Matilde (isolamento por criança a
+    funcionar).
+  - ✅ Upload de foto: Ana enviou uma foto a sério para a turma
+    Borboletas — confirmado pela legenda "Borboletas · Ana Silva ·
+    11/08/2026, 18:55:39" a aparecer.
+  - ⚠️ **Por confirmar**: a página `/painel/fotos` mostrou, nas duas
+    contas (Ana e Carla), a caixa da galeria com texto sobreposto e
+    ilegível em vez de uma grelha de fotos normal. Suspeita forte de
+    ser um artefacto de transição de página no browser (apareceu
+    conteúdo idêntico — fragmentos de uma mensagem antiga — nas duas
+    contas, o que não bate certo com ser um bug de RLS a mostrar dados
+    a mais). Utilizador vai confirmar mais tarde com um refresh
+    forçado (Ctrl/Cmd+Shift+R) e enviar print novo. **Não dar a Etapa
+    5 como fechada até isto ficar claro.**
+- 📌 Exploração de identidade visual para a Etapa 6: comparámos 3
+  referências (a inicial do utilizador, uma proposta minha "Mural de
+  Recados" com tema de cortiça/papel — não escolhida —, e duas
+  referências adicionais que o utilizador trouxe). Convergimos numa
+  direção: fundo branco/limpo com azul como cor de destaque, cor por
+  turma mantida como detalhe (rosa Borboletas, amarelo Girassóis).
+  Maqueta em artefacto (não código): aplicada às 5 telas já
+  construídas (Início, Mural, Presenças, Registo rápido, Fotos), mais
+  dois esboços fora do âmbito combinado (Desenvolvimento pedagógico,
+  Dashboard financeiro) — guardados só como ideia visual, não
+  implementar sem decisão explícita. Esta direção ainda não foi
+  formalmente aprovada como final; retomar antes de começar a Etapa 6.
 - ⚠️ Ainda por fazer: **renomear o branch de trabalho** —
   `claude/projeto-etapa-3-y7yviq` já tem as Etapas 3, 4 e 5; o nome
   ficou desatualizado mas não é urgente corrigir.
