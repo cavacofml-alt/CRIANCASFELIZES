@@ -52,34 +52,52 @@ declare
   cr_iris    constant uuid := 'f4444444-4444-4444-4444-444444444444';
 begin
 
-  -- Assume a identidade de um utilizador autenticado.
-  create temporary table if not exists _t (x int) on commit drop;
-
   -- =================================================================
   -- 1. VISITANTE SEM LOGIN
   -- =================================================================
   perform set_config('request.jwt.claims', '', true);
   execute 'set local role anon';
 
-  select count(*) into n from public.criancas;
+  -- Um visitante pode ser barrado de duas formas legítimas: por não ter
+  -- permissão na tabela (GRANT), ou por o RLS não lhe devolver linha
+  -- nenhuma. Ambas são aceitáveis; o que não pode é ver dados.
+  begin
+    select count(*) into n from public.criancas;
+    txt := n::text;
+  exception when insufficient_privilege then
+    txt := 'sem permissão';
+  end;
   c := c+1; nr := c; quem := 'Visitante (sem login)';
   teste := 'Não vê nenhuma criança';
-  esperado := '0'; obtido := n::text;
-  resultado := case when n = 0 then 'PASSOU' else '*** FALHOU ***' end;
+  esperado := '0 ou sem permissão'; obtido := txt;
+  resultado := case when txt in ('0', 'sem permissão')
+                    then 'PASSOU' else '*** FALHOU ***' end;
   return next;
 
-  select count(*) into n from public.perfis;
+  begin
+    select count(*) into n from public.perfis;
+    txt := n::text;
+  exception when insufficient_privilege then
+    txt := 'sem permissão';
+  end;
   c := c+1; nr := c; quem := 'Visitante (sem login)';
   teste := 'Não vê nenhum perfil';
-  esperado := '0'; obtido := n::text;
-  resultado := case when n = 0 then 'PASSOU' else '*** FALHOU ***' end;
+  esperado := '0 ou sem permissão'; obtido := txt;
+  resultado := case when txt in ('0', 'sem permissão')
+                    then 'PASSOU' else '*** FALHOU ***' end;
   return next;
 
-  select count(*) into n from public.escolas;
+  begin
+    select count(*) into n from public.escolas;
+    txt := n::text;
+  exception when insufficient_privilege then
+    txt := 'sem permissão';
+  end;
   c := c+1; nr := c; quem := 'Visitante (sem login)';
   teste := 'Não vê nenhuma escola';
-  esperado := '0'; obtido := n::text;
-  resultado := case when n = 0 then 'PASSOU' else '*** FALHOU ***' end;
+  esperado := '0 ou sem permissão'; obtido := txt;
+  resultado := case when txt in ('0', 'sem permissão')
+                    then 'PASSOU' else '*** FALHOU ***' end;
   return next;
 
   execute 'reset role';
