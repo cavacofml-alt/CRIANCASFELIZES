@@ -37,6 +37,9 @@ export default async function MuralPage() {
   const nomeAutor = new Map((autores ?? []).map((a) => [a.id, a.nome]));
   const nomeTurma = new Map((turmas ?? []).map((t) => [t.id, t.nome]));
 
+  // Visitar o mural é o que "lê" as notificações de avisos.
+  await supabase.rpc("marcar_notificacoes_tipo_lidas", { tipo_param: "aviso" });
+
   const contagemNaoLidas = await contarNotificacoesNaoLidas();
   const podePublicar = perfil.papel === "admin" || perfil.papel === "staff";
 

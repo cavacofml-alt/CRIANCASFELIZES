@@ -40,13 +40,21 @@ export default async function ConversaPage({
     .or(`remetente_id.eq.${contactoId},destinatario_id.eq.${contactoId}`)
     .order("criado_em", { ascending: true });
 
-  // Marca como lidas as mensagens recebidas ainda por ler nesta conversa.
+  // Marca como lidas as mensagens recebidas ainda por ler nesta conversa,
+  // e as notificações associadas a elas (só destas, não de outras conversas).
   const porLer = (mensagens ?? []).filter(
     (m) => m.destinatario_id === perfil.id && m.lida_em === null,
   );
-  await Promise.all(
-    porLer.map((m) => supabase.rpc("marcar_mensagem_lida", { mensagem_id: m.id })),
-  );
+  if (porLer.length > 0) {
+    await Promise.all(
+      porLer.map((m) =>
+        supabase.rpc("marcar_mensagem_lida", { mensagem_id: m.id }),
+      ),
+    );
+    await supabase.rpc("marcar_notificacoes_mensagens_lidas", {
+      ids: porLer.map((m) => m.id),
+    });
+  }
 
   const contagemNaoLidas = await contarNotificacoesNaoLidas();
 
