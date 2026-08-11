@@ -17,8 +17,13 @@ Atualizar sempre que surgir algo relevante que não pertença ao CLAUDE.md.
   sem comentários/reações), mensagens diretas 1:1 e notificações
   in-app — branch `claude/projeto-etapa-3-y7yviq`. Âmbito confirmado
   pelo utilizador depois da comparação com o Famly (ver secção
-  seguinte): mural fica simples, mensagens ficam 1:1. Falta o
-  utilizador verificar pessoalmente na app antes de avançar para a
+  seguinte): mural fica simples, mensagens ficam 1:1. Verificado
+  pessoalmente pelo utilizador em produção (preview da Vercel) com as
+  4 contas fictícias da Creche Arco-Íris; encontrado e corrigido em
+  conjunto um bug real (contador de notificações não lidas nunca
+  descia — faltava marcar a notificação como lida, só a mensagem;
+  corrigido no branch, verificado que o contador já zera). Etapa
+  considerada fechada; a aguardar autorização para avançar para a
   Etapa 4.
 
 ## Referência de produto: Famly — comparação feita
