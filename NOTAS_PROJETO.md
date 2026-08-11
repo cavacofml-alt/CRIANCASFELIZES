@@ -13,13 +13,13 @@ Atualizar sempre que surgir algo relevante que não pertença ao CLAUDE.md.
 - ✅ Etapa 2 — schema, RLS (25/25 testes adversariais a passar),
   autenticação com 3 papéis. Verificado manualmente pelo utilizador com
   3 contas fictícias diferentes.
-- ⚠️ Etapa 3 — comunicação escola-família. **Implementada em código**
-  (mural de avisos, mensagens diretas 1:1, notificações in-app — ver
-  branch `claude/projeto-etapa-3-y7yviq`), mas foi construída por uma
-  sessão que não tinha visto as perguntas pendentes abaixo nem tinha
-  feito a comparação com o Famly combinada. A comparação foi feita
-  depois, a posteriori (ver secção seguinte); a decisão de manter,
-  ajustar ou revisitar esta etapa está por confirmar com o utilizador.
+- ✅ Etapa 3 — comunicação escola-família. Mural de avisos (simples,
+  sem comentários/reações), mensagens diretas 1:1 e notificações
+  in-app — branch `claude/projeto-etapa-3-y7yviq`. Âmbito confirmado
+  pelo utilizador depois da comparação com o Famly (ver secção
+  seguinte): mural fica simples, mensagens ficam 1:1. Falta o
+  utilizador verificar pessoalmente na app antes de avançar para a
+  Etapa 4.
 
 ## Referência de produto: Famly — comparação feita
 
@@ -41,24 +41,14 @@ mais parecido com o EducaBiz — mural só de anúncios oficiais, sem
 interação pública entre pais. Mais simples de moderar e mais
 defensável com dados de menores; menos "vivo" que o Famly.
 
-Recomendação registada (ainda não confirmada pelo utilizador): manter
-mural simples + mensagens 1:1 para a v1; considerar o padrão "social"
-do Famly (comentários/reações, mensagens de grupo) como refinamento na
-Etapa 6 (UI/UX final), não como base agora.
+**Decisão do utilizador (confirmada): mural fica simples, mensagens
+ficam 1:1.** O padrão "social" do Famly (comentários/reações, mensagens
+de grupo) fica de fora da v1; pode ser reconsiderado na Etapa 6
+(UI/UX final) se fizer sentido nessa altura, mas não é um compromisso.
 
 ## Pendente de decisão
 
-Perguntas feitas ao utilizador, respondidas ou por confirmar:
-
-1. Mural de avisos entra na v1? → Implementado; por confirmar se fica.
-2. Mensagens diretas entram já na v1? → Implementado; por confirmar se
-   fica.
-3. Mural deve ganhar comentários/reações (estilo Famly) ou ficar
-   simples (estilo EducaBiz)? → Pergunta feita ao utilizador, ainda sem
-   resposta.
-4. Mensagens devem suportar grupo (educador → todos os encarregados de
-   uma turma) ou ficar só 1:1? → Pergunta feita ao utilizador, ainda
-   sem resposta.
+Nada pendente da Etapa 3 neste momento.
 
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
