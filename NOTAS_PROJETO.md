@@ -52,18 +52,19 @@ Atualizar sempre que surgir algo relevante que não pertença ao CLAUDE.md.
     a mais). Utilizador vai confirmar mais tarde com um refresh
     forçado (Ctrl/Cmd+Shift+R) e enviar print novo. **Não dar a Etapa
     5 como fechada até isto ficar claro.**
-- 📌 Exploração de identidade visual para a Etapa 6: comparámos 3
-  referências (a inicial do utilizador, uma proposta minha "Mural de
-  Recados" com tema de cortiça/papel — não escolhida —, e duas
-  referências adicionais que o utilizador trouxe). Convergimos numa
-  direção: fundo branco/limpo com azul como cor de destaque, cor por
-  turma mantida como detalhe (rosa Borboletas, amarelo Girassóis).
-  Maqueta em artefacto (não código): aplicada às 5 telas já
-  construídas (Início, Mural, Presenças, Registo rápido, Fotos), mais
-  dois esboços fora do âmbito combinado (Desenvolvimento pedagógico,
-  Dashboard financeiro) — guardados só como ideia visual, não
-  implementar sem decisão explícita. Esta direção ainda não foi
-  formalmente aprovada como final; retomar antes de começar a Etapa 6.
+- ⏳ Etapa 6 — identidade visual e animações, aplicadas a todas as
+  funcionalidades já construídas (branco/limpo + azul como cor de
+  destaque, cor por turma mantida como detalhe — não depende do nome
+  da turma, ver `src/lib/turmas.ts`). **Implementada em código**,
+  ainda **por verificar pessoalmente pelo utilizador**. Não são
+  precisas migrations desta vez — só código da aplicação, basta fazer
+  redeploy do branch na Vercel. `framer-motion` instalada (já prevista
+  no CLAUDE.md); animações discretas: entrada suave de página, listas
+  em cascata, indicador ativo animado na navegação, expandir/colapsar
+  formulários. Ao testar localmente, o `next dev` alterou
+  automaticamente o `CLAUDE.md` (funcionalidade nova do Next.js,
+  `agentRules`) — revertido e desativado em `next.config.ts` para não
+  voltar a acontecer.
 - ⚠️ Ainda por fazer: **renomear o branch de trabalho** —
   `claude/projeto-etapa-3-y7yviq` já tem as Etapas 3, 4 e 5; o nome
   ficou desatualizado mas não é urgente corrigir.
