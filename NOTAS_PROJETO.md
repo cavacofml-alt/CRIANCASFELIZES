@@ -24,16 +24,20 @@ Atualizar sempre que surgir algo relevante que não pertença ao CLAUDE.md.
   descia — faltava marcar a notificação como lida, só a mensagem;
   corrigido no branch, verificado que o contador já zera). Etapa
   fechada, autorizada pelo utilizador a avançar para a Etapa 4.
-- ⏳ Etapa 4 — presenças (check-in/check-out, registo de quem levanta
-  a criança). **Implementada em código** neste mesmo branch
-  (`claude/projeto-etapa-3-y7yviq`, ainda não renomeado): tabela
-  `presencas` (uma linha por criança por dia), RLS (staff só das suas
-  turmas, admin de toda a escola, encarregado só consulta), UI de
-  check-in/check-out com escolha de quem levantou a criança (encarregado
-  registado ou nome livre, para o caso de a pessoa não ter conta — ex.
-  avó). Ainda **por verificar pessoalmente pelo utilizador** — falta
-  aplicar as migrations 0010 a 0013 no Supabase e testar no preview da
-  Vercel antes de considerar a etapa fechada.
+- ✅ Etapa 4 — presenças (check-in/check-out, registo de quem levanta
+  a criança). Tabela `presencas` (uma linha por criança por dia), RLS
+  (staff só das suas turmas, admin de toda a escola, encarregado só
+  consulta), UI de check-in/check-out com escolha de quem levantou a
+  criança (encarregado registado ou nome livre, para quem não tem
+  conta — ex. avó). Verificada pessoalmente pelo utilizador em
+  produção; encontrado e corrigido em conjunto um bug real (horas
+  erradas — faltava fixar `timeZone: "Europe/Lisbon"` nos componentes
+  de servidor, que corriam em UTC na Vercel; corrigido de forma
+  centralizada em `src/lib/data.ts`, aplicado também ao mural e às
+  mensagens que tinham o mesmo problema). Etapa fechada.
+- ⚠️ Ainda por fazer: **renomear o branch de trabalho** —
+  `claude/projeto-etapa-3-y7yviq` já tem as Etapas 3 e 4; o nome ficou
+  desatualizado mas não é urgente corrigir.
 
 ## Referência de produto: Famly — comparação feita
 
