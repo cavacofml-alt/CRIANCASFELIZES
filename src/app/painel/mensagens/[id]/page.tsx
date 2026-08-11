@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesNaoLidas } from "@/lib/notificacoes";
+import { formatarDataHoraPT } from "@/lib/data";
 import { BotaoSair } from "../../botao-sair";
 import { PainelNav } from "../../nav";
 import { NovaMensagemForm } from "../nova-mensagem-form";
@@ -95,7 +96,7 @@ export default async function ConversaPage({
                   <p
                     className={`mt-1 text-[11px] ${minha ? "opacity-70" : "text-zinc-500"}`}
                   >
-                    {new Date(m.criado_em).toLocaleString("pt-PT")}
+                    {formatarDataHoraPT(m.criado_em)}
                   </p>
                 </div>
               );

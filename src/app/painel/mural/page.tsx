@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesNaoLidas } from "@/lib/notificacoes";
+import { formatarDataHoraPT } from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { NovoAvisoForm } from "./novo-aviso-form";
@@ -91,7 +92,7 @@ export default async function MuralPage() {
                 </p>
                 <p className="mt-3 text-xs text-zinc-400">
                   {nomeAutor.get(a.autor_id) ?? "—"} ·{" "}
-                  {new Date(a.criado_em).toLocaleString("pt-PT")}
+                  {formatarDataHoraPT(a.criado_em)}
                 </p>
               </article>
             ))

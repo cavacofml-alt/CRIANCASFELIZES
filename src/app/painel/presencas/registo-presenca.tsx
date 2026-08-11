@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { formatarHoraPT } from "@/lib/data";
 
 const BOTAO =
   "shrink-0 rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-zinc-50 dark:text-black";
@@ -98,12 +99,8 @@ export function RegistoPresenca({
   if (presenca.hora_saida) {
     return (
       <p className="text-sm text-zinc-500">
-        Saiu às{" "}
-        {new Date(presenca.hora_saida).toLocaleTimeString("pt-PT", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}{" "}
-        · levantado por {presenca.levantado_por_nome}
+        Saiu às {formatarHoraPT(presenca.hora_saida)} · levantado por{" "}
+        {presenca.levantado_por_nome}
       </p>
     );
   }
@@ -111,11 +108,7 @@ export function RegistoPresenca({
   return (
     <div className="flex flex-col items-end gap-2">
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Presente desde{" "}
-        {new Date(presenca.hora_entrada).toLocaleTimeString("pt-PT", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })}
+        Presente desde {formatarHoraPT(presenca.hora_entrada)}
       </p>
 
       {!aRegistarSaida ? (

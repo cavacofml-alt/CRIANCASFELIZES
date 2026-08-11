@@ -1,17 +1,15 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesNaoLidas } from "@/lib/notificacoes";
-import { hojeISO } from "@/lib/data";
+import {
+  hojeISO,
+  formatarHoraPT,
+  formatarDataPT,
+  formatarDataExtensaPT,
+} from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { RegistoPresenca } from "./registo-presenca";
-
-function formatarHora(iso: string) {
-  return new Date(iso).toLocaleTimeString("pt-PT", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 export default async function PresencasPage() {
   const supabase = await createClient();
@@ -71,15 +69,15 @@ export default async function PresencasPage() {
                         {nomeCrianca.get(p.crianca_id) ?? "—"}
                       </span>
                       <span className="text-sm text-zinc-500">
-                        {new Date(p.data).toLocaleDateString("pt-PT")}
+                        {formatarDataPT(p.data)}
                       </span>
                     </div>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       {p.hora_entrada
-                        ? `Entrada ${formatarHora(p.hora_entrada)}`
+                        ? `Entrada ${formatarHoraPT(p.hora_entrada)}`
                         : "Sem entrada registada"}
                       {p.hora_saida
-                        ? ` · Saída ${formatarHora(p.hora_saida)} · levantado por ${p.levantado_por_nome}`
+                        ? ` · Saída ${formatarHoraPT(p.hora_saida)} · levantado por ${p.levantado_por_nome}`
                         : " · ainda não saiu"}
                     </p>
                   </li>
@@ -162,12 +160,7 @@ export default async function PresencasPage() {
               Presenças
             </h1>
             <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-              {perfil.nome} ·{" "}
-              {new Date(hoje).toLocaleDateString("pt-PT", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
+              {perfil.nome} · {formatarDataExtensaPT(hoje)}
             </p>
           </div>
           <BotaoSair />
