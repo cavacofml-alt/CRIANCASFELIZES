@@ -15,6 +15,9 @@
 -- Resultado esperado: todas as linhas com "PASSOU".
 -- =====================================================================
 
+-- Garante que uma versão antiga guardada na base de dados é substituída.
+drop function if exists public.testar_rls();
+
 create or replace function public.testar_rls()
 returns table (
   nr        int,
@@ -27,10 +30,11 @@ returns table (
 language plpgsql
 as $$
 declare
-  n   int;
-  c   int := 0;
-  ok  boolean;
-  txt text;
+  n        int;
+  c        int := 0;
+  ok       boolean;
+  txt      text;
+  pode_ler boolean;
 
   -- Identificadores fixos definidos em 0003_dados_ficticios.sql
   id_rita   constant uuid := '11111111-1111-1111-1111-111111111111';
@@ -53,54 +57,83 @@ declare
 begin
 
   -- =================================================================
+  -- 0. Pré-requisitos — falha cedo e com uma mensagem clara.
+  -- =================================================================
+  if not has_table_privilege('authenticated', 'public.criancas', 'SELECT') then
+    nr := 0; quem := '(pré-requisito)';
+    teste := 'Correr primeiro o ficheiro 0004_permissoes.sql';
+    esperado := 'authenticated com acesso às tabelas';
+    obtido := 'sem permissão';
+    resultado := '*** NÃO EXECUTADO ***';
+    return next; return;
+  end if;
+
+  if not exists (select 1 from public.criancas) then
+    nr := 0; quem := '(pré-requisito)';
+    teste := 'Correr primeiro o ficheiro 0003_dados_ficticios.sql';
+    esperado := '4 crianças fictícias';
+    obtido := 'base de dados vazia';
+    resultado := '*** NÃO EXECUTADO ***';
+    return next; return;
+  end if;
+
+  -- =================================================================
   -- 1. VISITANTE SEM LOGIN
   -- =================================================================
+  -- Um visitante pode ser barrado em qualquer uma das duas camadas:
+  -- por não ter permissão na tabela (GRANT), ou por o RLS não lhe
+  -- devolver linha nenhuma. Ambas contam como bloqueado. Verificamos
+  -- primeiro a permissão, e só consultamos a tabela se ele a tiver —
+  -- assim o teste nunca rebenta, apenas reporta.
   perform set_config('request.jwt.claims', '', true);
-  execute 'set local role anon';
 
-  -- Um visitante pode ser barrado de duas formas legítimas: por não ter
-  -- permissão na tabela (GRANT), ou por o RLS não lhe devolver linha
-  -- nenhuma. Ambas são aceitáveis; o que não pode é ver dados.
-  begin
+  pode_ler := has_table_privilege('anon', 'public.criancas', 'SELECT');
+  if pode_ler then
+    execute 'set local role anon';
     select count(*) into n from public.criancas;
+    execute 'reset role';
     txt := n::text;
-  exception when insufficient_privilege then
-    txt := 'sem permissão';
-  end;
+  else
+    txt := 'sem permissão na tabela';
+  end if;
   c := c+1; nr := c; quem := 'Visitante (sem login)';
   teste := 'Não vê nenhuma criança';
-  esperado := '0 ou sem permissão'; obtido := txt;
-  resultado := case when txt in ('0', 'sem permissão')
+  esperado := 'bloqueado'; obtido := txt;
+  resultado := case when txt in ('0', 'sem permissão na tabela')
                     then 'PASSOU' else '*** FALHOU ***' end;
   return next;
 
-  begin
+  pode_ler := has_table_privilege('anon', 'public.perfis', 'SELECT');
+  if pode_ler then
+    execute 'set local role anon';
     select count(*) into n from public.perfis;
+    execute 'reset role';
     txt := n::text;
-  exception when insufficient_privilege then
-    txt := 'sem permissão';
-  end;
+  else
+    txt := 'sem permissão na tabela';
+  end if;
   c := c+1; nr := c; quem := 'Visitante (sem login)';
   teste := 'Não vê nenhum perfil';
-  esperado := '0 ou sem permissão'; obtido := txt;
-  resultado := case when txt in ('0', 'sem permissão')
+  esperado := 'bloqueado'; obtido := txt;
+  resultado := case when txt in ('0', 'sem permissão na tabela')
                     then 'PASSOU' else '*** FALHOU ***' end;
   return next;
 
-  begin
+  pode_ler := has_table_privilege('anon', 'public.escolas', 'SELECT');
+  if pode_ler then
+    execute 'set local role anon';
     select count(*) into n from public.escolas;
+    execute 'reset role';
     txt := n::text;
-  exception when insufficient_privilege then
-    txt := 'sem permissão';
-  end;
+  else
+    txt := 'sem permissão na tabela';
+  end if;
   c := c+1; nr := c; quem := 'Visitante (sem login)';
   teste := 'Não vê nenhuma escola';
-  esperado := '0 ou sem permissão'; obtido := txt;
-  resultado := case when txt in ('0', 'sem permissão')
+  esperado := 'bloqueado'; obtido := txt;
+  resultado := case when txt in ('0', 'sem permissão na tabela')
                     then 'PASSOU' else '*** FALHOU ***' end;
   return next;
-
-  execute 'reset role';
 
   -- =================================================================
   -- 2. CARLA FERREIRA — encarregada, mãe da Matilde (Borboletas)
