@@ -41,6 +41,9 @@ async function limpar() {
   console.log("A limpar dados fictícios anteriores…");
 
   // A ordem respeita as chaves estrangeiras.
+  await db.from("notificacoes").delete().neq("id", ZERO_UUID);
+  await db.from("mensagens").delete().neq("id", ZERO_UUID);
+  await db.from("avisos").delete().neq("id", ZERO_UUID);
   await db.from("staff_turmas").delete().neq("staff_id", ZERO_UUID);
   await db.from("encarregados_criancas").delete().neq("crianca_id", ZERO_UUID);
   await db.from("criancas").delete().neq("id", ZERO_UUID);
@@ -183,6 +186,43 @@ async function main() {
     { staff_id: ids.staffGirassois, turma_id: girassois.id },
   ]);
 
+  console.log("A criar avisos (mural) e mensagens…");
+  const [avisoEscola] = await inserir("avisos", [
+    {
+      escola_id: arcoIris.id,
+      turma_id: null,
+      autor_id: ids.adminArcoIris,
+      titulo: "Reunião geral de pais",
+      corpo: "No dia 20, às 18h, reunião geral no salão principal.",
+    },
+  ]);
+  const [avisoTurma] = await inserir("avisos", [
+    {
+      escola_id: arcoIris.id,
+      turma_id: borboletas.id,
+      autor_id: ids.staffBorboletas,
+      titulo: "Fotografia escolar da turma",
+      corpo: "Na quinta-feira as crianças trazem bata clara.",
+    },
+  ]);
+
+  const [mensagemEnc] = await inserir("mensagens", [
+    {
+      escola_id: arcoIris.id,
+      remetente_id: ids.encMatilde,
+      destinatario_id: ids.staffBorboletas,
+      corpo: "Bom dia, a Matilde hoje dorme mais tarde a sesta.",
+    },
+  ]);
+  const [mensagemStaff] = await inserir("mensagens", [
+    {
+      escola_id: arcoIris.id,
+      remetente_id: ids.staffBorboletas,
+      destinatario_id: ids.encMatilde,
+      corpo: "Boa tarde, ficou registado, obrigada por avisar!",
+    },
+  ]);
+
   console.log("\n✓ Dados fictícios criados.\n");
   console.log(`Palavra-passe de todas as contas: ${PALAVRA_PASSE}\n`);
   console.table(
@@ -208,6 +248,14 @@ async function main() {
       iris: iris.id,
     },
     perfis: ids,
+    avisos: {
+      escola: avisoEscola.id,
+      turma: avisoTurma.id,
+    },
+    mensagens: {
+      encPergunta: mensagemEnc.id,
+      staffResposta: mensagemStaff.id,
+    },
   };
   const { writeFileSync } = await import("node:fs");
   writeFileSync(
