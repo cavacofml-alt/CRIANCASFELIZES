@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { contarNotificacoesNaoLidas } from "@/lib/notificacoes";
+import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import {
   hojeISO,
   formatarHoraPT,
@@ -26,7 +26,8 @@ export default async function PresencasPage() {
     .maybeSingle();
   if (!perfil) redirect("/painel");
 
-  const contagemNaoLidas = await contarNotificacoesNaoLidas();
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
+    await contarNotificacoesPorTipo();
 
   if (perfil.papel === "encarregado") {
     const { data: historico } = await supabase
@@ -57,7 +58,7 @@ export default async function PresencasPage() {
             <BotaoSair />
           </header>
 
-          <PainelNav contagemNaoLidas={contagemNaoLidas} />
+          <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
 
           <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             {historico && historico.length > 0 ? (
@@ -166,7 +167,7 @@ export default async function PresencasPage() {
           <BotaoSair />
         </header>
 
-        <PainelNav contagemNaoLidas={contagemNaoLidas} />
+        <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
 
         {grupos.length > 0 ? (
           grupos.map((g) => (

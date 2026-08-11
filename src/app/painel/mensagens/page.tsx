@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { contarNotificacoesNaoLidas } from "@/lib/notificacoes";
+import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 
@@ -77,7 +77,8 @@ export default async function MensagensPage() {
     (p) => !conversas.has(p.id),
   );
 
-  const contagemNaoLidas = await contarNotificacoesNaoLidas();
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
+    await contarNotificacoesPorTipo();
 
   return (
     <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
@@ -94,7 +95,7 @@ export default async function MensagensPage() {
           <BotaoSair />
         </header>
 
-        <PainelNav contagemNaoLidas={contagemNaoLidas} />
+        <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
 
         <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="mb-3 font-semibold text-black dark:text-zinc-50">

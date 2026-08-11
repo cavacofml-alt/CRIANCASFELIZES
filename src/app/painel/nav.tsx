@@ -1,9 +1,20 @@
 import Link from "next/link";
 
+function Badge({ contagem }: { contagem: number }) {
+  if (contagem <= 0) return null;
+  return (
+    <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold text-white">
+      {contagem}
+    </span>
+  );
+}
+
 export function PainelNav({
-  contagemNaoLidas = 0,
+  contagemAvisos = 0,
+  contagemMensagens = 0,
 }: {
-  contagemNaoLidas?: number;
+  contagemAvisos?: number;
+  contagemMensagens?: number;
 }) {
   return (
     <nav className="flex items-center gap-4 text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -15,9 +26,10 @@ export function PainelNav({
       </Link>
       <Link
         href="/painel/mural"
-        className="transition-colors hover:text-black dark:hover:text-zinc-50"
+        className="flex items-center gap-1.5 transition-colors hover:text-black dark:hover:text-zinc-50"
       >
         Mural
+        <Badge contagem={contagemAvisos} />
       </Link>
       <Link
         href="/painel/presencas"
@@ -30,11 +42,7 @@ export function PainelNav({
         className="flex items-center gap-1.5 transition-colors hover:text-black dark:hover:text-zinc-50"
       >
         Mensagens
-        {contagemNaoLidas > 0 && (
-          <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold text-white">
-            {contagemNaoLidas}
-          </span>
-        )}
+        <Badge contagem={contagemMensagens} />
       </Link>
     </nav>
   );

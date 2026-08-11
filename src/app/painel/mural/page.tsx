@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { contarNotificacoesNaoLidas } from "@/lib/notificacoes";
+import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { formatarDataHoraPT } from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
@@ -41,7 +41,8 @@ export default async function MuralPage() {
   // Visitar o mural é o que "lê" as notificações de avisos.
   await supabase.rpc("marcar_notificacoes_tipo_lidas", { tipo_param: "aviso" });
 
-  const contagemNaoLidas = await contarNotificacoesNaoLidas();
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
+    await contarNotificacoesPorTipo();
   const podePublicar = perfil.papel === "admin" || perfil.papel === "staff";
 
   return (
@@ -59,7 +60,7 @@ export default async function MuralPage() {
           <BotaoSair />
         </header>
 
-        <PainelNav contagemNaoLidas={contagemNaoLidas} />
+        <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
 
         {podePublicar && (
           <NovoAvisoForm
