@@ -68,6 +68,8 @@ async function main() {
     verificar("não vê nenhuma mensagem", (ms?.length ?? 0) === 0);
     const { data: nt } = await anon.from("notificacoes").select("id");
     verificar("não vê nenhuma notificação", (nt?.length ?? 0) === 0);
+    const { data: pr } = await anon.from("presencas").select("id");
+    verificar("não vê nenhuma presença", (pr?.length ?? 0) === 0);
   }
 
   // -------------------------------------------------------------------
@@ -256,6 +258,26 @@ async function main() {
       errMarcarMsgAlheia === null && msgAindaNaoLida?.lida_em == null,
       "a função RPC não deve dar erro (a linha simplesmente não é afetada), mas a mensagem tem de continuar por ler",
     );
+
+    // Presenças (Etapa 4): só vê a presença da sua educanda, nunca escreve.
+    const { data: presencas } = await c.from("presencas").select("crianca_id");
+    verificar(
+      "vê só 1 presença (a da sua educanda)",
+      presencas?.length === 1 && presencas[0].crianca_id === ids.criancas.matilde,
+      `viu ${presencas?.length ?? 0}`,
+    );
+
+    const { error: errPresencaIns } = await c.from("presencas").insert({
+      escola_id: ids.escolas.arcoIris,
+      crianca_id: ids.criancas.matilde,
+      data: "2026-08-11",
+      hora_entrada: new Date().toISOString(),
+      registado_entrada_por: ids.perfis.encMatilde,
+    });
+    verificar(
+      "NÃO consegue registar entrada (só staff/admin)",
+      errPresencaIns !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -369,6 +391,58 @@ async function main() {
       "NÃO consegue enviar mensagem a encarregado de outra turma",
       errMsgDiogo !== null,
     );
+
+    // Presenças (Etapa 4): regista entrada/saída só das crianças da turma.
+    const { data: presencasTurma } = await c
+      .from("presencas")
+      .select("crianca_id");
+    verificar(
+      "vê as 2 presenças da sua turma (Matilde e Tomás)",
+      presencasTurma?.length === 2,
+      `viu ${presencasTurma?.length ?? 0}`,
+    );
+
+    const { data: novaPresenca, error: errEntrada } = await c
+      .from("presencas")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.matilde,
+        data: "2026-08-11",
+        hora_entrada: new Date().toISOString(),
+        registado_entrada_por: ids.perfis.staffBorboletas,
+      })
+      .select()
+      .single();
+    verificar(
+      "consegue registar entrada de uma criança da sua turma",
+      errEntrada === null,
+    );
+
+    if (novaPresenca) {
+      const { error: errSaida } = await c
+        .from("presencas")
+        .update({
+          hora_saida: new Date().toISOString(),
+          levantado_por_id: ids.perfis.encMatilde,
+          levantado_por_nome: "Carla Ferreira",
+          registado_saida_por: ids.perfis.staffBorboletas,
+        })
+        .eq("id", novaPresenca.id);
+      verificar("consegue registar a saída da mesma criança", errSaida === null);
+      await c.from("presencas").delete().eq("id", novaPresenca.id);
+    }
+
+    const { error: errEntradaLeonor } = await c.from("presencas").insert({
+      escola_id: ids.escolas.arcoIris,
+      crianca_id: ids.criancas.leonor,
+      data: "2026-08-11",
+      hora_entrada: new Date().toISOString(),
+      registado_entrada_por: ids.perfis.staffBorboletas,
+    });
+    verificar(
+      "NÃO consegue registar entrada de uma criança de outra turma",
+      errEntradaLeonor !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -410,6 +484,32 @@ async function main() {
     verificar(
       "NÃO vê a conversa entre a Carla e a Ana (não participa)",
       (msgsAlheias?.length ?? 0) === 0,
+    );
+
+    const { data: presencasBruno } = await c
+      .from("presencas")
+      .select("crianca_id");
+    verificar(
+      "vê só a presença da Leonor",
+      presencasBruno?.length === 1 &&
+        presencasBruno[0].crianca_id === ids.criancas.leonor,
+      `viu ${presencasBruno?.length ?? 0}`,
+    );
+
+    const { error: errUpdateAlheia } = await c
+      .from("presencas")
+      .update({ hora_saida: new Date().toISOString() })
+      .eq("crianca_id", ids.criancas.matilde)
+      .eq("data", "2026-08-10");
+    const { data: matildeAindaAssim } = await c
+      .from("presencas")
+      .select("hora_saida")
+      .eq("crianca_id", ids.criancas.matilde)
+      .eq("data", "2026-08-10");
+    verificar(
+      "NÃO consegue alterar a presença de uma criança de outra turma",
+      errUpdateAlheia === null && (matildeAindaAssim?.length ?? 0) === 0,
+      "o update não dá erro (RLS filtra as linhas), mas não deve conseguir sequer ver/afetar a linha",
     );
   }
 
@@ -515,6 +615,44 @@ async function main() {
       "NÃO consegue enviar mensagem a alguém de outra escola",
       errMsgOutraEscola !== null,
     );
+
+    // Presenças: admin vê e regista para qualquer criança da sua escola.
+    const { data: todasPresencas } = await c.from("presencas").select("id");
+    verificar(
+      "vê as 3 presenças da sua escola",
+      todasPresencas?.length === 3,
+      `viu ${todasPresencas?.length ?? 0}`,
+    );
+
+    const { data: presencaAdmin, error: errEntradaAdmin } = await c
+      .from("presencas")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.leonor,
+        data: "2026-08-12",
+        hora_entrada: new Date().toISOString(),
+        registado_entrada_por: ids.perfis.adminArcoIris,
+      })
+      .select()
+      .single();
+    verificar(
+      "consegue registar entrada de qualquer criança da escola",
+      errEntradaAdmin === null,
+    );
+    if (presencaAdmin)
+      await c.from("presencas").delete().eq("id", presencaAdmin.id);
+
+    const { error: errEntradaOutraEscola } = await c.from("presencas").insert({
+      escola_id: ids.escolas.estrelinha,
+      crianca_id: ids.criancas.iris,
+      data: "2026-08-12",
+      hora_entrada: new Date().toISOString(),
+      registado_entrada_por: ids.perfis.adminArcoIris,
+    });
+    verificar(
+      "NÃO consegue registar presença numa criança de outra escola",
+      errEntradaOutraEscola !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -550,6 +688,15 @@ async function main() {
       "NÃO vê nenhuma mensagem da escola Arco-Íris",
       (mensagensOutraEscola?.length ?? 0) === 0,
       `viu ${mensagensOutraEscola?.length ?? 0}`,
+    );
+
+    const { data: presencasOutraEscola } = await c
+      .from("presencas")
+      .select("id");
+    verificar(
+      "NÃO vê nenhuma presença da escola Arco-Íris",
+      (presencasOutraEscola?.length ?? 0) === 0,
+      `viu ${presencasOutraEscola?.length ?? 0}`,
     );
   }
 
