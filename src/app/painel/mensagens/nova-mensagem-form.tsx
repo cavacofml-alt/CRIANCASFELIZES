@@ -2,7 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { CAMPO, BOTAO_PRIMARIO } from "../estilos";
 
 export function NovaMensagemForm({
   escolaId,
@@ -47,16 +49,17 @@ export function NovaMensagemForm({
         value={corpo}
         onChange={(e) => setCorpo(e.target.value)}
         placeholder="Escreva uma mensagem…"
-        className="flex-1 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+        className={`flex-1 ${CAMPO}`}
       />
-      <button
+      <motion.button
+        whileTap={{ scale: 0.96 }}
         type="submit"
         disabled={aEnviar}
-        className="shrink-0 rounded-lg bg-black px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-zinc-50 dark:text-black"
+        className={`shrink-0 ${BOTAO_PRIMARIO}`}
       >
         {aEnviar ? "A enviar…" : "Enviar"}
-      </button>
-      {erro && <p className="text-sm text-red-600">{erro}</p>}
+      </motion.button>
+      {erro && <p className="text-sm text-red-600 dark:text-red-400">{erro}</p>}
     </form>
   );
 }
