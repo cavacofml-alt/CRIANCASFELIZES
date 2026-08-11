@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f7fc;
+  --foreground: #1e293b;
 }
 
 @theme inline {
@@ -12,15 +12,56 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* ---------------------------------------------------------------------
+ * Identidade visual da Crianças Felizes (Etapa 6)
+ * Base branca/limpa com azul como cor de destaque; cor por turma
+ * mantida como detalhe de identidade (não decoração), não uma paleta
+ * arco-íris genérica.
+ * ------------------------------------------------------------------- */
+@theme {
+  --color-brand-bg: #f4f7fc;
+  --color-brand-bg-dark: #0f141d;
+  --color-brand-surface: #ffffff;
+  --color-brand-surface-dark: #161c27;
+  --color-brand-border: #e4e9f2;
+  --color-brand-border-dark: #262e3d;
+  --color-brand-ink: #1e293b;
+  --color-brand-ink-dark: #e7ecf5;
+  --color-brand-muted: #64748b;
+  --color-brand-muted-dark: #8d99b2;
+
+  --color-brand-accent: #3d7dfa;
+  --color-brand-accent-hover: #2f6ce0;
+  --color-brand-accent-soft: #e7edfd;
+  --color-brand-accent-soft-dark: #1b2740;
+
+  --color-brand-positive: #1f9d5c;
+  --color-brand-positive-soft: #e5f6ec;
+  --color-brand-positive-soft-dark: #123322;
+
+  --color-brand-warn: #b5810f;
+  --color-brand-warn-soft: #fbf0d2;
+  --color-brand-warn-soft-dark: #3a2d0d;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f141d;
+    --foreground: #e7ecf5;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
