@@ -41,6 +41,7 @@ async function limpar() {
   console.log("A limpar dados fictícios anteriores…");
 
   // A ordem respeita as chaves estrangeiras.
+  await db.from("presencas").delete().neq("id", ZERO_UUID);
   await db.from("notificacoes").delete().neq("id", ZERO_UUID);
   await db.from("mensagens").delete().neq("id", ZERO_UUID);
   await db.from("avisos").delete().neq("id", ZERO_UUID);
@@ -220,6 +221,39 @@ async function main() {
       remetente_id: ids.staffBorboletas,
       destinatario_id: ids.encMatilde,
       corpo: "Boa tarde, ficou registado, obrigada por avisar!",
+    },
+  ]);
+
+  console.log("A criar presenças (dia fixo, 2026-08-10)…");
+  await inserir("presencas", [
+    {
+      escola_id: arcoIris.id,
+      crianca_id: matilde.id,
+      data: "2026-08-10",
+      hora_entrada: "2026-08-10 08:15:00+01",
+      registado_entrada_por: ids.staffBorboletas,
+      hora_saida: "2026-08-10 17:30:00+01",
+      levantado_por_id: ids.encMatilde,
+      levantado_por_nome: "Carla Ferreira",
+      registado_saida_por: ids.staffBorboletas,
+    },
+    {
+      escola_id: arcoIris.id,
+      crianca_id: tomas.id,
+      data: "2026-08-10",
+      hora_entrada: "2026-08-10 08:20:00+01",
+      registado_entrada_por: ids.staffBorboletas,
+    },
+    {
+      escola_id: arcoIris.id,
+      crianca_id: leonor.id,
+      data: "2026-08-10",
+      hora_entrada: "2026-08-10 08:00:00+01",
+      registado_entrada_por: ids.staffGirassois,
+      hora_saida: "2026-08-10 17:00:00+01",
+      levantado_por_id: ids.encLeonor,
+      levantado_por_nome: "Diogo Pinto",
+      registado_saida_por: ids.staffGirassois,
     },
   ]);
 
