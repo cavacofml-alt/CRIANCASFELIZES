@@ -2,10 +2,9 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
-
-const CAMPO =
-  "rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-black outline-none focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50";
+import { CAMPO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO } from "../estilos";
 
 const OPCOES_REFEICAO = [
   { valor: "", etiqueta: "—" },
@@ -102,124 +101,131 @@ export function RegistoRelatorio({
       .join(", ");
 
     return (
-      <button
+      <motion.button
+        whileTap={{ scale: 0.97 }}
         onClick={() => setAberto(true)}
-        className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        className={`self-start ${BOTAO_SECUNDARIO}`}
       >
         {relatorio ? `Editar (${resumo || "preenchido"})` : "Preencher relatório"}
-      </button>
+      </motion.button>
     );
   }
 
   return (
-    <form
-      onSubmit={guardar}
-      className="flex w-full flex-col gap-3 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800"
-    >
-      <div className="grid grid-cols-3 gap-2">
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Pequeno-almoço
-          <select
-            value={pequenoAlmoco}
-            onChange={(e) => setPequenoAlmoco(e.target.value)}
-            className={CAMPO}
-          >
-            {OPCOES_REFEICAO.map((o) => (
-              <option key={o.valor} value={o.valor}>
-                {o.etiqueta}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Almoço
-          <select
-            value={almoco}
-            onChange={(e) => setAlmoco(e.target.value)}
-            className={CAMPO}
-          >
-            {OPCOES_REFEICAO.map((o) => (
-              <option key={o.valor} value={o.valor}>
-                {o.etiqueta}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Lanche
-          <select
-            value={lanche}
-            onChange={(e) => setLanche(e.target.value)}
-            className={CAMPO}
-          >
-            {OPCOES_REFEICAO.map((o) => (
-              <option key={o.valor} value={o.valor}>
-                {o.etiqueta}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+    <AnimatePresence>
+      <motion.form
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: "auto" }}
+        transition={{ duration: 0.2 }}
+        onSubmit={guardar}
+        className="flex w-full flex-col gap-3 overflow-hidden rounded-xl border border-brand-border p-3 dark:border-brand-border-dark"
+      >
+        <div className="grid grid-cols-3 gap-2">
+          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+            Pequeno-almoço
+            <select
+              value={pequenoAlmoco}
+              onChange={(e) => setPequenoAlmoco(e.target.value)}
+              className={`${CAMPO} py-1.5`}
+            >
+              {OPCOES_REFEICAO.map((o) => (
+                <option key={o.valor} value={o.valor}>
+                  {o.etiqueta}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+            Almoço
+            <select
+              value={almoco}
+              onChange={(e) => setAlmoco(e.target.value)}
+              className={`${CAMPO} py-1.5`}
+            >
+              {OPCOES_REFEICAO.map((o) => (
+                <option key={o.valor} value={o.valor}>
+                  {o.etiqueta}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+            Lanche
+            <select
+              value={lanche}
+              onChange={(e) => setLanche(e.target.value)}
+              className={`${CAMPO} py-1.5`}
+            >
+              {OPCOES_REFEICAO.map((o) => (
+                <option key={o.valor} value={o.valor}>
+                  {o.etiqueta}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Sesta — início
-          <input
-            type="time"
-            value={sonoInicio}
-            onChange={(e) => setSonoInicio(e.target.value)}
+        <div className="grid grid-cols-3 gap-2">
+          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+            Sesta — início
+            <input
+              type="time"
+              value={sonoInicio}
+              onChange={(e) => setSonoInicio(e.target.value)}
+              className={`${CAMPO} py-1.5`}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+            Sesta — fim
+            <input
+              type="time"
+              value={sonoFim}
+              onChange={(e) => setSonoFim(e.target.value)}
+              className={`${CAMPO} py-1.5`}
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+            Fraldas trocadas
+            <input
+              type="number"
+              min={0}
+              value={fraldas}
+              onChange={(e) => setFraldas(Number(e.target.value))}
+              className={`${CAMPO} py-1.5`}
+            />
+          </label>
+        </div>
+
+        <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+          Notas
+          <textarea
+            value={notas}
+            onChange={(e) => setNotas(e.target.value)}
+            rows={2}
             className={CAMPO}
           />
         </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Sesta — fim
-          <input
-            type="time"
-            value={sonoFim}
-            onChange={(e) => setSonoFim(e.target.value)}
-            className={CAMPO}
-          />
-        </label>
-        <label className="flex flex-col gap-1 text-xs text-zinc-500">
-          Fraldas trocadas
-          <input
-            type="number"
-            min={0}
-            value={fraldas}
-            onChange={(e) => setFraldas(Number(e.target.value))}
-            className={CAMPO}
-          />
-        </label>
-      </div>
 
-      <label className="flex flex-col gap-1 text-xs text-zinc-500">
-        Notas
-        <textarea
-          value={notas}
-          onChange={(e) => setNotas(e.target.value)}
-          rows={2}
-          className={CAMPO}
-        />
-      </label>
+        {erro && <p className="text-xs text-red-600 dark:text-red-400">{erro}</p>}
 
-      {erro && <p className="text-xs text-red-600">{erro}</p>}
-
-      <div className="flex gap-2">
-        <button
-          type="submit"
-          disabled={aGuardar}
-          className="rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-zinc-50 dark:text-black"
-        >
-          {aGuardar ? "A guardar…" : "Guardar"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setAberto(false)}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          Cancelar
-        </button>
-      </div>
-    </form>
+        <div className="flex gap-2">
+          <motion.button
+            whileTap={{ scale: 0.96 }}
+            type="submit"
+            disabled={aGuardar}
+            className={BOTAO_PRIMARIO}
+          >
+            {aGuardar ? "A guardar…" : "Guardar"}
+          </motion.button>
+          <button
+            type="button"
+            onClick={() => setAberto(false)}
+            className={BOTAO_SECUNDARIO}
+          >
+            Cancelar
+          </button>
+        </div>
+      </motion.form>
+    </AnimatePresence>
   );
 }

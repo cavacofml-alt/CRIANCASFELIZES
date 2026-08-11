@@ -4,6 +4,7 @@ import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { hojeISO, formatarDataPT, formatarDataExtensaPT } from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
+import { PageFade, StaggerList, StaggerItem } from "../motion";
 import { RegistoRelatorio } from "./registo-relatorio";
 
 const ETIQUETA_REFEICAO: Record<string, string> = {
@@ -50,14 +51,14 @@ export default async function RelatoriosPage() {
     const nomeCrianca = new Map((criancas ?? []).map((c) => [c.id, c.nome]));
 
     return (
-      <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
+      <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
         <div className="mx-auto flex max-w-3xl flex-col gap-8">
           <header className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-black dark:text-zinc-50">
+              <h1 className="text-2xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
                 Relatórios diários
               </h1>
-              <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+              <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
                 {perfil.nome}
               </p>
             </div>
@@ -69,61 +70,69 @@ export default async function RelatoriosPage() {
             contagemMensagens={contagemMensagens}
           />
 
-          <section className="flex flex-col gap-4">
-            {historico && historico.length > 0 ? (
-              historico.map((r) => (
-                <article
-                  key={r.id}
-                  className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  <div className="flex items-center justify-between">
-                    <h2 className="font-semibold text-black dark:text-zinc-50">
-                      {nomeCrianca.get(r.crianca_id) ?? "—"}
-                    </h2>
-                    <span className="text-sm text-zinc-500">
-                      {formatarDataPT(r.data)}
-                    </span>
-                  </div>
-                  <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                    <div>
-                      <dt className="text-zinc-500">Pequeno-almoço</dt>
-                      <dd className="text-zinc-800 dark:text-zinc-200">
-                        {resumoRefeicao(r.pequeno_almoco)}
-                      </dd>
+          <PageFade>
+            <StaggerList className="flex flex-col gap-4">
+              {historico && historico.length > 0 ? (
+                historico.map((r) => (
+                  <StaggerItem
+                    key={r.id}
+                    className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-semibold text-brand-ink dark:text-brand-ink-dark">
+                        {nomeCrianca.get(r.crianca_id) ?? "—"}
+                      </h2>
+                      <span className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                        {formatarDataPT(r.data)}
+                      </span>
                     </div>
-                    <div>
-                      <dt className="text-zinc-500">Almoço</dt>
-                      <dd className="text-zinc-800 dark:text-zinc-200">
-                        {resumoRefeicao(r.almoco)}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-zinc-500">Lanche</dt>
-                      <dd className="text-zinc-800 dark:text-zinc-200">
-                        {resumoRefeicao(r.lanche)}
-                      </dd>
-                    </div>
-                  </dl>
-                  <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-                    {r.sono_inicio
-                      ? `Sesta: ${r.sono_inicio.slice(0, 5)}${r.sono_fim ? ` – ${r.sono_fim.slice(0, 5)}` : ""}`
-                      : "Sem registo de sesta"}
-                    {" · "}
-                    Fraldas trocadas: {r.fraldas_trocadas}
-                  </p>
-                  {r.notas && (
-                    <p className="mt-2 text-sm italic text-zinc-600 dark:text-zinc-400">
-                      “{r.notas}”
+                    <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
+                      <div>
+                        <dt className="text-brand-muted dark:text-brand-muted-dark">
+                          Pequeno-almoço
+                        </dt>
+                        <dd className="text-brand-ink dark:text-brand-ink-dark">
+                          {resumoRefeicao(r.pequeno_almoco)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-brand-muted dark:text-brand-muted-dark">
+                          Almoço
+                        </dt>
+                        <dd className="text-brand-ink dark:text-brand-ink-dark">
+                          {resumoRefeicao(r.almoco)}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-brand-muted dark:text-brand-muted-dark">
+                          Lanche
+                        </dt>
+                        <dd className="text-brand-ink dark:text-brand-ink-dark">
+                          {resumoRefeicao(r.lanche)}
+                        </dd>
+                      </div>
+                    </dl>
+                    <p className="mt-3 text-sm text-brand-muted dark:text-brand-muted-dark">
+                      {r.sono_inicio
+                        ? `Sesta: ${r.sono_inicio.slice(0, 5)}${r.sono_fim ? ` – ${r.sono_fim.slice(0, 5)}` : ""}`
+                        : "Sem registo de sesta"}
+                      {" · "}
+                      Fraldas trocadas: {r.fraldas_trocadas}
                     </p>
-                  )}
-                </article>
-              ))
-            ) : (
-              <p className="text-sm text-zinc-500">
-                Ainda não há relatórios diários.
-              </p>
-            )}
-          </section>
+                    {r.notas && (
+                      <p className="mt-2 text-sm italic text-brand-muted dark:text-brand-muted-dark">
+                        “{r.notas}”
+                      </p>
+                    )}
+                  </StaggerItem>
+                ))
+              ) : (
+                <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                  Ainda não há relatórios diários.
+                </p>
+              )}
+            </StaggerList>
+          </PageFade>
         </div>
       </main>
     );
@@ -162,14 +171,14 @@ export default async function RelatoriosPage() {
     .filter((g) => g.criancas.length > 0);
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
+    <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
               Relatórios diários
             </h1>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
               {perfil.nome} · {formatarDataExtensaPT(hoje)}
             </p>
           </div>
@@ -181,36 +190,42 @@ export default async function RelatoriosPage() {
           contagemMensagens={contagemMensagens}
         />
 
-        {grupos.length > 0 ? (
-          grupos.map((g) => (
-            <section
-              key={g.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <h2 className="mb-3 font-semibold text-black dark:text-zinc-50">
-                {g.nome}
-              </h2>
-              <ul className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
-                {g.criancas.map((c) => (
-                  <li key={c.id} className="flex flex-col gap-2 py-3">
-                    <span className="text-zinc-900 dark:text-zinc-100">
-                      {c.nome}
-                    </span>
-                    <RegistoRelatorio
-                      escolaId={perfil.escola_id}
-                      criancaId={c.id}
-                      data={hoje}
-                      perfilId={perfil.id}
-                      relatorio={relatorioPorCrianca.get(c.id) ?? null}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))
-        ) : (
-          <p className="text-sm text-zinc-500">Nenhuma criança visível.</p>
-        )}
+        <PageFade>
+          <StaggerList className="flex flex-col gap-6">
+            {grupos.length > 0 ? (
+              grupos.map((g) => (
+                <StaggerItem
+                  key={g.id}
+                  className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
+                >
+                  <h2 className="mb-3 font-semibold text-brand-ink dark:text-brand-ink-dark">
+                    {g.nome}
+                  </h2>
+                  <ul className="flex flex-col divide-y divide-brand-border dark:divide-brand-border-dark">
+                    {g.criancas.map((c) => (
+                      <li key={c.id} className="flex flex-col gap-2 py-3">
+                        <span className="text-brand-ink dark:text-brand-ink-dark">
+                          {c.nome}
+                        </span>
+                        <RegistoRelatorio
+                          escolaId={perfil.escola_id}
+                          criancaId={c.id}
+                          data={hoje}
+                          perfilId={perfil.id}
+                          relatorio={relatorioPorCrianca.get(c.id) ?? null}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </StaggerItem>
+              ))
+            ) : (
+              <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                Nenhuma criança visível.
+              </p>
+            )}
+          </StaggerList>
+        </PageFade>
       </div>
     </main>
   );
