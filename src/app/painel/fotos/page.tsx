@@ -4,6 +4,7 @@ import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { formatarDataHoraPT } from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
+import { PageFade, StaggerList, StaggerItem } from "../motion";
 import { UploadFotoForm } from "./upload-foto-form";
 import { ApagarFotoBotao } from "./apagar-foto-botao";
 
@@ -59,14 +60,14 @@ export default async function FotosPage() {
   const podeEnviar = perfil.papel === "admin" || perfil.papel === "staff";
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
+    <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
               Fotos
             </h1>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
               {perfil.nome}
             </p>
           </div>
@@ -87,49 +88,53 @@ export default async function FotosPage() {
         )}
 
         {fotos && fotos.length > 0 ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            {fotos.map((f) => {
-              const url = urlPorCaminho.get(f.caminho);
-              const podeApagar =
-                perfil.papel === "admin" || f.autor_id === perfil.id;
-              return (
-                <figure
-                  key={f.id}
-                  className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
-                >
-                  {url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={url}
-                      alt={f.legenda ?? "Foto da turma"}
-                      className="aspect-square w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-square w-full items-center justify-center text-xs text-zinc-400">
-                      Imagem indisponível
+          <PageFade>
+            <StaggerList className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {fotos.map((f) => {
+                const url = urlPorCaminho.get(f.caminho);
+                const podeApagar =
+                  perfil.papel === "admin" || f.autor_id === perfil.id;
+                return (
+                  <StaggerItem
+                    key={f.id}
+                    className="group relative overflow-hidden rounded-2xl border border-brand-border bg-brand-surface dark:border-brand-border-dark dark:bg-brand-surface-dark"
+                  >
+                    {url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={url}
+                        alt={f.legenda ?? "Foto da turma"}
+                        className="aspect-square w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-square w-full items-center justify-center text-xs text-brand-muted dark:text-brand-muted-dark">
+                        Imagem indisponível
+                      </div>
+                    )}
+                    {podeApagar && (
+                      <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <ApagarFotoBotao fotoId={f.id} caminho={f.caminho} />
+                      </div>
+                    )}
+                    <div className="p-2 text-xs text-brand-muted dark:text-brand-muted-dark">
+                      <p className="font-medium text-brand-ink dark:text-brand-ink-dark">
+                        {nomeTurma.get(f.turma_id) ?? "Turma"}
+                      </p>
+                      {f.legenda && <p>{f.legenda}</p>}
+                      <p>
+                        {nomeAutor.get(f.autor_id) ?? "—"} ·{" "}
+                        {formatarDataHoraPT(f.criado_em)}
+                      </p>
                     </div>
-                  )}
-                  {podeApagar && (
-                    <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
-                      <ApagarFotoBotao fotoId={f.id} caminho={f.caminho} />
-                    </div>
-                  )}
-                  <figcaption className="p-2 text-xs text-zinc-500">
-                    <p className="font-medium text-zinc-700 dark:text-zinc-300">
-                      {nomeTurma.get(f.turma_id) ?? "Turma"}
-                    </p>
-                    {f.legenda && <p>{f.legenda}</p>}
-                    <p>
-                      {nomeAutor.get(f.autor_id) ?? "—"} ·{" "}
-                      {formatarDataHoraPT(f.criado_em)}
-                    </p>
-                  </figcaption>
-                </figure>
-              );
-            })}
-          </div>
+                  </StaggerItem>
+                );
+              })}
+            </StaggerList>
+          </PageFade>
         ) : (
-          <p className="text-sm text-zinc-500">Ainda não há fotos.</p>
+          <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+            Ainda não há fotos.
+          </p>
         )}
       </div>
     </main>

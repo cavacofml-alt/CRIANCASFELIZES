@@ -28,7 +28,7 @@ export function ApagarFotoBotao({
     <button
       onClick={apagar}
       disabled={aApagar}
-      className="rounded-lg bg-black/60 px-2 py-1 text-xs font-medium text-white hover:bg-black/80 disabled:opacity-50"
+      className="rounded-full bg-black/55 px-2 py-1 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-black/75 disabled:opacity-50"
     >
       {aApagar ? "…" : "Apagar"}
     </button>
