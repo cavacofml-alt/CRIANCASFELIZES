@@ -70,6 +70,20 @@ async function main() {
     verificar("não vê nenhuma notificação", (nt?.length ?? 0) === 0);
     const { data: pr } = await anon.from("presencas").select("id");
     verificar("não vê nenhuma presença", (pr?.length ?? 0) === 0);
+    const { data: rd } = await anon.from("relatorios_diarios").select("id");
+    verificar("não vê nenhum relatório diário", (rd?.length ?? 0) === 0);
+    const { data: ft } = await anon.from("fotos").select("id");
+    verificar("não vê nenhuma foto", (ft?.length ?? 0) === 0);
+    const { error: errAnonStorage } = await anon.storage
+      .from("fotos-turmas")
+      .createSignedUrl(
+        `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/exemplo.png`,
+        60,
+      );
+    verificar(
+      "visitante não autenticado não consegue gerar link de foto nenhuma",
+      errAnonStorage !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -278,6 +292,64 @@ async function main() {
       "NÃO consegue registar entrada (só staff/admin)",
       errPresencaIns !== null,
     );
+
+    // Relatórios diários e fotos (Etapa 5): só consulta, nunca escreve.
+    const { data: relatorios } = await c
+      .from("relatorios_diarios")
+      .select("crianca_id");
+    verificar(
+      "vê só 1 relatório (o da sua educanda)",
+      relatorios?.length === 1 &&
+        relatorios[0].crianca_id === ids.criancas.matilde,
+      `viu ${relatorios?.length ?? 0}`,
+    );
+
+    const { error: errRelatorioIns } = await c
+      .from("relatorios_diarios")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.matilde,
+        data: "2026-08-11",
+        registado_por: ids.perfis.encMatilde,
+      });
+    verificar(
+      "NÃO consegue criar relatório (só staff/admin)",
+      errRelatorioIns !== null,
+    );
+
+    const { data: fotos } = await c.from("fotos").select("turma_id");
+    verificar(
+      "vê a foto da turma da sua educanda",
+      fotos?.length === 1 && fotos[0].turma_id === ids.turmas.borboletas,
+      `viu ${fotos?.length ?? 0}`,
+    );
+
+    const { data: baixarFoto, error: errBaixarFoto } = await c.storage
+      .from("fotos-turmas")
+      .createSignedUrl(`${ids.escolas.arcoIris}/${ids.turmas.borboletas}/exemplo.png`, 60);
+    verificar(
+      "consegue gerar link para a foto da turma da sua educanda",
+      errBaixarFoto === null && !!baixarFoto?.signedUrl,
+    );
+
+    const { error: errFotoOutraTurma } = await c.storage
+      .from("fotos-turmas")
+      .createSignedUrl(`${ids.escolas.arcoIris}/${ids.turmas.girassois}/nao-existe.png`, 60);
+    verificar(
+      "NÃO consegue gerar link para foto de turma que não é da sua educanda",
+      errFotoOutraTurma !== null,
+    );
+
+    const { error: errUploadEnc } = await c.storage
+      .from("fotos-turmas")
+      .upload(
+        `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/intrusa.png`,
+        new Blob(["x"]),
+      );
+    verificar(
+      "NÃO consegue fazer upload de fotos (só staff/admin)",
+      errUploadEnc !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -443,6 +515,71 @@ async function main() {
       "NÃO consegue registar entrada de uma criança de outra turma",
       errEntradaLeonor !== null,
     );
+
+    // Relatórios diários e fotos (Etapa 5): só das crianças/turma dela.
+    const { data: relatoriosTurma } = await c
+      .from("relatorios_diarios")
+      .select("crianca_id");
+    verificar(
+      "vê os 2 relatórios da sua turma (Matilde e Tomás)",
+      relatoriosTurma?.length === 2,
+      `viu ${relatoriosTurma?.length ?? 0}`,
+    );
+
+    const { data: novoRelatorio, error: errRelatorioIns } = await c
+      .from("relatorios_diarios")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.matilde,
+        data: "2026-08-11",
+        pequeno_almoco: "comeu_tudo",
+        registado_por: ids.perfis.staffBorboletas,
+      })
+      .select()
+      .single();
+    verificar(
+      "consegue criar relatório de uma criança da sua turma",
+      errRelatorioIns === null,
+    );
+    if (novoRelatorio) {
+      const { error: errRelatorioUpd } = await c
+        .from("relatorios_diarios")
+        .update({ almoco: "comeu_metade" })
+        .eq("id", novoRelatorio.id);
+      verificar("consegue editar o relatório ao longo do dia", errRelatorioUpd === null);
+      await c.from("relatorios_diarios").delete().eq("id", novoRelatorio.id);
+    }
+
+    const { error: errRelatorioLeonor } = await c.from("relatorios_diarios").insert({
+      escola_id: ids.escolas.arcoIris,
+      crianca_id: ids.criancas.leonor,
+      data: "2026-08-11",
+      registado_por: ids.perfis.staffBorboletas,
+    });
+    verificar(
+      "NÃO consegue criar relatório de uma criança de outra turma",
+      errRelatorioLeonor !== null,
+    );
+
+    const caminhoFotoTeste = `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/teste-${Date.now()}.png`;
+    const { error: errUploadAna } = await c.storage
+      .from("fotos-turmas")
+      .upload(caminhoFotoTeste, new Blob(["x"]));
+    verificar("consegue fazer upload de foto para a sua turma", errUploadAna === null);
+    if (!errUploadAna) {
+      await c.storage.from("fotos-turmas").remove([caminhoFotoTeste]);
+    }
+
+    const { error: errUploadOutraTurma } = await c.storage
+      .from("fotos-turmas")
+      .upload(
+        `${ids.escolas.arcoIris}/${ids.turmas.girassois}/intrusa-${Date.now()}.png`,
+        new Blob(["x"]),
+      );
+    verificar(
+      "NÃO consegue fazer upload de foto para a turma do colega",
+      errUploadOutraTurma !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -510,6 +647,31 @@ async function main() {
       "NÃO consegue alterar a presença de uma criança de outra turma",
       errUpdateAlheia === null && (matildeAindaAssim?.length ?? 0) === 0,
       "o update não dá erro (RLS filtra as linhas), mas não deve conseguir sequer ver/afetar a linha",
+    );
+
+    const { data: relatoriosBruno } = await c
+      .from("relatorios_diarios")
+      .select("crianca_id");
+    verificar(
+      "vê só o relatório da Leonor",
+      relatoriosBruno?.length === 1 &&
+        relatoriosBruno[0].crianca_id === ids.criancas.leonor,
+      `viu ${relatoriosBruno?.length ?? 0}`,
+    );
+
+    const { data: fotosBruno } = await c.from("fotos").select("turma_id");
+    verificar(
+      "NÃO vê a foto da turma Borboletas (não é a sua turma)",
+      (fotosBruno?.length ?? 0) === 0,
+      `viu ${fotosBruno?.length ?? 0}`,
+    );
+
+    const { error: errBaixarFotoAlheia } = await c.storage
+      .from("fotos-turmas")
+      .createSignedUrl(`${ids.escolas.arcoIris}/${ids.turmas.borboletas}/exemplo.png`, 60);
+    verificar(
+      "NÃO consegue gerar link para foto da turma do colega",
+      errBaixarFotoAlheia !== null,
     );
   }
 
@@ -653,6 +815,42 @@ async function main() {
       "NÃO consegue registar presença numa criança de outra escola",
       errEntradaOutraEscola !== null,
     );
+
+    const { data: relatoriosAdmin } = await c
+      .from("relatorios_diarios")
+      .select("id");
+    verificar(
+      "vê os 3 relatórios da sua escola",
+      relatoriosAdmin?.length === 3,
+      `viu ${relatoriosAdmin?.length ?? 0}`,
+    );
+
+    const { data: fotosAdmin } = await c.from("fotos").select("id");
+    verificar("vê a foto da escola", fotosAdmin?.length === 1);
+
+    const { data: linkAdmin, error: errLinkAdmin } = await c.storage
+      .from("fotos-turmas")
+      .createSignedUrl(`${ids.escolas.arcoIris}/${ids.turmas.girassois}/nao-existe.png`, 60);
+    // O admin tem acesso a qualquer turma da sua escola — o Storage do
+    // Supabase não sabe se o ficheiro existe, mas a política deixa
+    // passar (não há erro de autorização); o "não existe" dá erro por
+    // outra razão (ficheiro em falta), não por RLS.
+    verificar(
+      "admin tem autorização para a pasta de qualquer turma da escola",
+      errLinkAdmin === null || !errLinkAdmin.message?.toLowerCase().includes("polic"),
+      linkAdmin ? "" : errLinkAdmin?.message,
+    );
+
+    const { error: errUploadOutraEscolaFoto } = await c.storage
+      .from("fotos-turmas")
+      .upload(
+        `${ids.escolas.estrelinha}/${ids.turmas.luas}/intrusa-${Date.now()}.png`,
+        new Blob(["x"]),
+      );
+    verificar(
+      "NÃO consegue fazer upload de foto para turma de outra escola",
+      errUploadOutraEscolaFoto !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -697,6 +895,30 @@ async function main() {
       "NÃO vê nenhuma presença da escola Arco-Íris",
       (presencasOutraEscola?.length ?? 0) === 0,
       `viu ${presencasOutraEscola?.length ?? 0}`,
+    );
+
+    const { data: relatoriosOutraEscola } = await c
+      .from("relatorios_diarios")
+      .select("id");
+    verificar(
+      "NÃO vê nenhum relatório da escola Arco-Íris",
+      (relatoriosOutraEscola?.length ?? 0) === 0,
+      `viu ${relatoriosOutraEscola?.length ?? 0}`,
+    );
+
+    const { data: fotosOutraEscola } = await c.from("fotos").select("id");
+    verificar(
+      "NÃO vê nenhuma foto da escola Arco-Íris",
+      (fotosOutraEscola?.length ?? 0) === 0,
+      `viu ${fotosOutraEscola?.length ?? 0}`,
+    );
+
+    const { error: errFotoOutraEscolaStorage } = await c.storage
+      .from("fotos-turmas")
+      .createSignedUrl(`${ids.escolas.arcoIris}/${ids.turmas.borboletas}/exemplo.png`, 60);
+    verificar(
+      "NÃO consegue gerar link para foto de outra escola",
+      errFotoOutraEscolaStorage !== null,
     );
   }
 
