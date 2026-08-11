@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
+import { CAMPO, BOTAO_PRIMARIO } from "../painel/estilos";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,18 +36,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-black">
-      <div className="w-full max-w-sm">
-        <h1 className="mb-2 text-center text-3xl font-bold tracking-tight text-black dark:text-zinc-50">
+    <div className="flex min-h-screen items-center justify-center bg-brand-bg px-4 dark:bg-brand-bg-dark">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className="w-full max-w-sm"
+      >
+        <h1 className="mb-2 text-center text-3xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
           Crianças Felizes
         </h1>
-        <p className="mb-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+        <p className="mb-8 text-center text-sm text-brand-muted dark:text-brand-muted-dark">
           Entre com a conta fornecida pela escola.
         </p>
 
         <form onSubmit={aoSubmeter} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-brand-ink dark:text-brand-ink-dark">
               Email
             </span>
             <input
@@ -54,12 +61,12 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-black outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-zinc-400"
+              className={CAMPO}
             />
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <span className="text-sm font-medium text-brand-ink dark:text-brand-ink-dark">
               Palavra-passe
             </span>
             <input
@@ -68,7 +75,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-black outline-none focus:border-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-zinc-400"
+              className={CAMPO}
             />
           </label>
 
@@ -78,15 +85,16 @@ export default function LoginPage() {
             </p>
           )}
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.97 }}
             type="submit"
             disabled={aCarregar}
-            className="mt-2 rounded-lg bg-black px-4 py-2.5 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-white dark:text-black"
+            className={`mt-2 ${BOTAO_PRIMARIO}`}
           >
             {aCarregar ? "A entrar…" : "Entrar"}
-          </button>
+          </motion.button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
