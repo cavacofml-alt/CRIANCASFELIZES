@@ -9,6 +9,7 @@ import {
 } from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
+import { PageFade, StaggerList, StaggerItem } from "../motion";
 import { RegistoPresenca } from "./registo-presenca";
 
 export default async function PresencasPage() {
@@ -44,52 +45,57 @@ export default async function PresencasPage() {
     const nomeCrianca = new Map((criancas ?? []).map((c) => [c.id, c.nome]));
 
     return (
-      <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
+      <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
         <div className="mx-auto flex max-w-3xl flex-col gap-8">
           <header className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-black dark:text-zinc-50">
+              <h1 className="text-2xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
                 Presenças
               </h1>
-              <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+              <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
                 {perfil.nome}
               </p>
             </div>
             <BotaoSair />
           </header>
 
-          <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
+          <PainelNav
+            contagemAvisos={contagemAvisos}
+            contagemMensagens={contagemMensagens}
+          />
 
-          <section className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-            {historico && historico.length > 0 ? (
-              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {historico.map((p) => (
-                  <li key={p.id} className="flex flex-col gap-1 py-3">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {nomeCrianca.get(p.crianca_id) ?? "—"}
-                      </span>
-                      <span className="text-sm text-zinc-500">
-                        {formatarDataPT(p.data)}
-                      </span>
-                    </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {p.hora_entrada
-                        ? `Entrada ${formatarHoraPT(p.hora_entrada)}`
-                        : "Sem entrada registada"}
-                      {p.hora_saida
-                        ? ` · Saída ${formatarHoraPT(p.hora_saida)} · levantado por ${p.levantado_por_nome}`
-                        : " · ainda não saiu"}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-zinc-500">
-                Ainda não há registos de presença.
-              </p>
-            )}
-          </section>
+          <PageFade>
+            <section className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark">
+              {historico && historico.length > 0 ? (
+                <StaggerList className="divide-y divide-brand-border dark:divide-brand-border-dark">
+                  {historico.map((p) => (
+                    <StaggerItem key={p.id} className="flex flex-col gap-1 py-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-brand-ink dark:text-brand-ink-dark">
+                          {nomeCrianca.get(p.crianca_id) ?? "—"}
+                        </span>
+                        <span className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                          {formatarDataPT(p.data)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                        {p.hora_entrada
+                          ? `Entrada ${formatarHoraPT(p.hora_entrada)}`
+                          : "Sem entrada registada"}
+                        {p.hora_saida
+                          ? ` · Saída ${formatarHoraPT(p.hora_saida)} · levantado por ${p.levantado_por_nome}`
+                          : " · ainda não saiu"}
+                      </p>
+                    </StaggerItem>
+                  ))}
+                </StaggerList>
+              ) : (
+                <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                  Ainda não há registos de presença.
+                </p>
+              )}
+            </section>
+          </PageFade>
         </div>
       </main>
     );
@@ -153,56 +159,65 @@ export default async function PresencasPage() {
   ].filter((g) => g.criancas.length > 0);
 
   return (
-    <main className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-black">
+    <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
         <header className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-black dark:text-zinc-50">
+            <h1 className="text-2xl font-bold tracking-tight text-brand-ink dark:text-brand-ink-dark">
               Presenças
             </h1>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
               {perfil.nome} · {formatarDataExtensaPT(hoje)}
             </p>
           </div>
           <BotaoSair />
         </header>
 
-        <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
+        <PainelNav
+          contagemAvisos={contagemAvisos}
+          contagemMensagens={contagemMensagens}
+        />
 
-        {grupos.length > 0 ? (
-          grupos.map((g) => (
-            <section
-              key={g.id}
-              className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              <h2 className="mb-3 font-semibold text-black dark:text-zinc-50">
-                {g.nome}
-              </h2>
-              <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                {g.criancas.map((c) => (
-                  <li
-                    key={c.id}
-                    className="flex items-center justify-between gap-4 py-3"
-                  >
-                    <span className="text-zinc-900 dark:text-zinc-100">
-                      {c.nome}
-                    </span>
-                    <RegistoPresenca
-                      escolaId={perfil.escola_id}
-                      criancaId={c.id}
-                      data={hoje}
-                      perfilId={perfil.id}
-                      presenca={presencaPorCrianca.get(c.id) ?? null}
-                      encarregados={encarregadosPorCrianca.get(c.id) ?? []}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ))
-        ) : (
-          <p className="text-sm text-zinc-500">Nenhuma criança visível.</p>
-        )}
+        <PageFade>
+          <StaggerList className="flex flex-col gap-6">
+            {grupos.length > 0 ? (
+              grupos.map((g) => (
+                <StaggerItem
+                  key={g.id}
+                  className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
+                >
+                  <h2 className="mb-3 font-semibold text-brand-ink dark:text-brand-ink-dark">
+                    {g.nome}
+                  </h2>
+                  <ul className="divide-y divide-brand-border dark:divide-brand-border-dark">
+                    {g.criancas.map((c) => (
+                      <li
+                        key={c.id}
+                        className="flex items-center justify-between gap-4 py-3"
+                      >
+                        <span className="text-brand-ink dark:text-brand-ink-dark">
+                          {c.nome}
+                        </span>
+                        <RegistoPresenca
+                          escolaId={perfil.escola_id}
+                          criancaId={c.id}
+                          data={hoje}
+                          perfilId={perfil.id}
+                          presenca={presencaPorCrianca.get(c.id) ?? null}
+                          encarregados={encarregadosPorCrianca.get(c.id) ?? []}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </StaggerItem>
+              ))
+            ) : (
+              <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
+                Nenhuma criança visível.
+              </p>
+            )}
+          </StaggerList>
+        </PageFade>
       </div>
     </main>
   );

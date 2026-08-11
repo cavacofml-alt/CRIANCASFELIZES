@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { formatarHoraPT } from "@/lib/data";
-
-const BOTAO =
-  "shrink-0 rounded-lg bg-black px-3 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50 dark:bg-zinc-50 dark:text-black";
+import { CAMPO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO } from "../estilos";
 
 type Presenca = {
   id: string;
@@ -88,17 +87,22 @@ export function RegistoPresenca({
   if (!presenca || !presenca.hora_entrada) {
     return (
       <div className="flex items-center gap-2">
-        {erro && <p className="text-xs text-red-600">{erro}</p>}
-        <button onClick={registarEntrada} disabled={aGuardar} className={BOTAO}>
+        {erro && <p className="text-xs text-red-600 dark:text-red-400">{erro}</p>}
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          onClick={registarEntrada}
+          disabled={aGuardar}
+          className={BOTAO_PRIMARIO}
+        >
           {aGuardar ? "A registar…" : "Registar entrada"}
-        </button>
+        </motion.button>
       </div>
     );
   }
 
   if (presenca.hora_saida) {
     return (
-      <p className="text-sm text-zinc-500">
+      <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
         Saiu às {formatarHoraPT(presenca.hora_saida)} · levantado por{" "}
         {presenca.levantado_por_nome}
       </p>
@@ -107,52 +111,73 @@ export function RegistoPresenca({
 
   return (
     <div className="flex flex-col items-end gap-2">
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="flex items-center gap-1.5 text-sm text-brand-positive dark:text-brand-positive">
+        <span className="h-1.5 w-1.5 rounded-full bg-brand-positive" />
         Presente desde {formatarHoraPT(presenca.hora_entrada)}
       </p>
 
-      {!aRegistarSaida ? (
-        <button
-          onClick={() => setARegistarSaida(true)}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
-        >
-          Registar saída
-        </button>
-      ) : (
-        <div className="flex flex-col items-end gap-2 rounded-lg border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="text-xs text-zinc-500">Quem levantou a criança?</p>
-          {encarregados.length > 0 && (
-            <select
-              value={levantadoPorId}
+      <AnimatePresence mode="wait" initial={false}>
+        {!aRegistarSaida ? (
+          <motion.button
+            key="abrir"
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setARegistarSaida(true)}
+            className={BOTAO_SECUNDARIO}
+          >
+            Registar saída
+          </motion.button>
+        ) : (
+          <motion.div
+            key="form"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18 }}
+            className="flex flex-col items-end gap-2 overflow-hidden rounded-xl border border-brand-border p-3 dark:border-brand-border-dark"
+          >
+            <p className="text-xs text-brand-muted dark:text-brand-muted-dark">
+              Quem levantou a criança?
+            </p>
+            {encarregados.length > 0 && (
+              <select
+                value={levantadoPorId}
+                onChange={(e) => {
+                  setLevantadoPorId(e.target.value);
+                  setLevantadoPorNome("");
+                }}
+                className={`${CAMPO} w-56 py-1.5`}
+              >
+                <option value="">— Escolher —</option>
+                {encarregados.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.nome}
+                  </option>
+                ))}
+              </select>
+            )}
+            <input
+              value={levantadoPorNome}
               onChange={(e) => {
-                setLevantadoPorId(e.target.value);
-                setLevantadoPorNome("");
+                setLevantadoPorNome(e.target.value);
+                setLevantadoPorId("");
               }}
-              className="rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-black dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
+              placeholder="Ou escreva o nome (ex.: outra pessoa autorizada)"
+              className={`${CAMPO} w-56 py-1.5`}
+            />
+            {erro && (
+              <p className="text-xs text-red-600 dark:text-red-400">{erro}</p>
+            )}
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              onClick={registarSaida}
+              disabled={aGuardar}
+              className={BOTAO_PRIMARIO}
             >
-              <option value="">— Escolher —</option>
-              {encarregados.map((e) => (
-                <option key={e.id} value={e.id}>
-                  {e.nome}
-                </option>
-              ))}
-            </select>
-          )}
-          <input
-            value={levantadoPorNome}
-            onChange={(e) => {
-              setLevantadoPorNome(e.target.value);
-              setLevantadoPorId("");
-            }}
-            placeholder="Ou escreva o nome (ex.: outra pessoa autorizada)"
-            className="w-56 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-black dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-50"
-          />
-          {erro && <p className="text-xs text-red-600">{erro}</p>}
-          <button onClick={registarSaida} disabled={aGuardar} className={BOTAO}>
-            {aGuardar ? "A registar…" : "Confirmar saída"}
-          </button>
-        </div>
-      )}
+              {aGuardar ? "A registar…" : "Confirmar saída"}
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
