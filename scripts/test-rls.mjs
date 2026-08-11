@@ -62,6 +62,12 @@ async function main() {
     verificar("não vê nenhum perfil", (pf?.length ?? 0) === 0);
     const { data: es } = await anon.from("escolas").select("id");
     verificar("não vê nenhuma escola", (es?.length ?? 0) === 0);
+    const { data: av } = await anon.from("avisos").select("id");
+    verificar("não vê nenhum aviso", (av?.length ?? 0) === 0);
+    const { data: ms } = await anon.from("mensagens").select("id");
+    verificar("não vê nenhuma mensagem", (ms?.length ?? 0) === 0);
+    const { data: nt } = await anon.from("notificacoes").select("id");
+    verificar("não vê nenhuma notificação", (nt?.length ?? 0) === 0);
   }
 
   // -------------------------------------------------------------------
@@ -98,7 +104,11 @@ async function main() {
     verificar("NÃO vê a Íris (outra escola)", (iris?.length ?? 0) === 0);
 
     const { data: pf } = await c.from("perfis").select("id");
-    verificar("vê apenas o seu próprio perfil", pf?.length === 1);
+    verificar(
+      "vê o seu perfil + staff da turma e admin da educanda (Etapa 3), mais ninguém",
+      pf?.length === 3,
+      `viu ${pf?.length ?? 0}`,
+    );
 
     const { data: tu } = await c.from("turmas").select("nome");
     verificar(
@@ -132,6 +142,119 @@ async function main() {
       "NÃO consegue promover-se a administradora",
       depois?.papel === "encarregado",
       `papel ficou: ${depois?.papel}`,
+    );
+
+    // Comunicação: mural, mensagens, notificações (Etapa 3).
+    const { data: avisos } = await c.from("avisos").select("titulo");
+    verificar(
+      "vê os 2 avisos da sua turma/escola",
+      avisos?.length === 2,
+      `viu ${avisos?.length ?? 0}`,
+    );
+
+    const { data: pfEquipa } = await c
+      .from("perfis")
+      .select("nome")
+      .neq("id", ids.perfis.encMatilde);
+    verificar(
+      "vê apenas a Ana (staff da turma) e a Rita (admin) além de si própria",
+      pfEquipa?.length === 2,
+      `viu ${pfEquipa?.length ?? 0}: ${pfEquipa?.map((x) => x.nome).join(", ")}`,
+    );
+
+    const { data: conversa } = await c.from("mensagens").select("id");
+    verificar(
+      "vê as 2 mensagens da sua conversa com a Ana",
+      conversa?.length === 2,
+      `viu ${conversa?.length ?? 0}`,
+    );
+
+    const { error: errMsgAna } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.encMatilde,
+      destinatario_id: ids.perfis.staffBorboletas,
+      corpo: "Mensagem de teste.",
+    });
+    verificar("consegue enviar mensagem à staff da turma da educanda", errMsgAna === null);
+
+    const { error: errMsgAdmin } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.encMatilde,
+      destinatario_id: ids.perfis.adminArcoIris,
+      corpo: "Mensagem de teste à administração.",
+    });
+    verificar("consegue enviar mensagem à administração", errMsgAdmin === null);
+
+    const { error: errMsgBruno } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.encMatilde,
+      destinatario_id: ids.perfis.staffGirassois,
+      corpo: "Não devia conseguir enviar isto.",
+    });
+    verificar(
+      "NÃO consegue enviar mensagem a staff de turma que não é da sua educanda",
+      errMsgBruno !== null,
+    );
+
+    const { error: errMsgOutroEnc } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.encMatilde,
+      destinatario_id: ids.perfis.encLeonor,
+      corpo: "Não devia conseguir enviar isto.",
+    });
+    verificar(
+      "NÃO consegue enviar mensagem a outro encarregado",
+      errMsgOutroEnc !== null,
+    );
+
+    const { error: errAviso } = await c.from("avisos").insert({
+      escola_id: ids.escolas.arcoIris,
+      turma_id: ids.turmas.borboletas,
+      autor_id: ids.perfis.encMatilde,
+      titulo: "Não devia conseguir publicar isto",
+      corpo: "…",
+    });
+    verificar("NÃO consegue publicar no mural", errAviso !== null);
+
+    const { data: notifs } = await c
+      .from("notificacoes")
+      .select("id, lida")
+      .eq("lida", false);
+    verificar(
+      "tem notificações por ler (avisos + mensagem da Ana)",
+      (notifs?.length ?? 0) >= 1,
+      `tinha ${notifs?.length ?? 0}`,
+    );
+
+    if (notifs && notifs.length > 0) {
+      const { error: errMarcar } = await c.rpc("marcar_notificacao_lida", {
+        notificacao_id: notifs[0].id,
+      });
+      const { data: depois } = await c
+        .from("notificacoes")
+        .select("lida")
+        .eq("id", notifs[0].id)
+        .single();
+      verificar(
+        "consegue marcar a sua própria notificação como lida",
+        errMarcar === null && depois?.lida === true,
+      );
+    }
+
+    // A Carla é a REMETENTE de `encPergunta` (não a destinatária) — não
+    // deve conseguir marcá-la como lida através da função RPC.
+    const { error: errMarcarMsgAlheia } = await c.rpc("marcar_mensagem_lida", {
+      mensagem_id: ids.mensagens.encPergunta,
+    });
+    const { data: msgAindaNaoLida } = await c
+      .from("mensagens")
+      .select("lida_em")
+      .eq("id", ids.mensagens.encPergunta)
+      .single();
+    verificar(
+      "NÃO consegue marcar como lida uma mensagem em que não é destinatária",
+      errMarcarMsgAlheia === null && msgAindaNaoLida?.lida_em == null,
+      "a função RPC não deve dar erro (a linha simplesmente não é afetada), mas a mensagem tem de continuar por ler",
     );
   }
 
@@ -178,6 +301,74 @@ async function main() {
       nome: "Criança Intrusa",
     });
     verificar("NÃO consegue inscrever uma criança", errIns !== null);
+
+    // Comunicação: mural, mensagens (Etapa 3).
+    const { data: avisos } = await c.from("avisos").select("titulo");
+    verificar(
+      "vê os 2 avisos (escola-wide + da sua turma)",
+      avisos?.length === 2,
+      `viu ${avisos?.length ?? 0}`,
+    );
+
+    const { data: avisoTeste, error: errAvisoTurma } = await c
+      .from("avisos")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        turma_id: ids.turmas.borboletas,
+        autor_id: ids.perfis.staffBorboletas,
+        titulo: "Aviso de teste da minha turma",
+        corpo: "…",
+      })
+      .select()
+      .single();
+    verificar("consegue publicar aviso para a sua própria turma", errAvisoTurma === null);
+    if (avisoTeste) await c.from("avisos").delete().eq("id", avisoTeste.id);
+
+    const { error: errAvisoOutraTurma } = await c.from("avisos").insert({
+      escola_id: ids.escolas.arcoIris,
+      turma_id: ids.turmas.girassois,
+      autor_id: ids.perfis.staffBorboletas,
+      titulo: "Não devia conseguir publicar isto",
+      corpo: "…",
+    });
+    verificar(
+      "NÃO consegue publicar aviso para a turma do colega",
+      errAvisoOutraTurma !== null,
+    );
+
+    const { error: errAvisoEscola } = await c.from("avisos").insert({
+      escola_id: ids.escolas.arcoIris,
+      turma_id: null,
+      autor_id: ids.perfis.staffBorboletas,
+      titulo: "Não devia conseguir publicar isto",
+      corpo: "…",
+    });
+    verificar(
+      "NÃO consegue publicar aviso para toda a escola",
+      errAvisoEscola !== null,
+    );
+
+    const { error: errMsgCarla } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.staffBorboletas,
+      destinatario_id: ids.perfis.encMatilde,
+      corpo: "Mensagem de teste.",
+    });
+    verificar(
+      "consegue enviar mensagem à encarregada de uma educanda da turma",
+      errMsgCarla === null,
+    );
+
+    const { error: errMsgDiogo } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.staffBorboletas,
+      destinatario_id: ids.perfis.encLeonor,
+      corpo: "Não devia conseguir enviar isto.",
+    });
+    verificar(
+      "NÃO consegue enviar mensagem a encarregado de outra turma",
+      errMsgDiogo !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -200,6 +391,25 @@ async function main() {
       "NÃO vê a encarregada da turma do colega",
       enc?.length === 1 && enc[0].nome === "Diogo Pinto",
       `viu: ${enc?.map((x) => x.nome).join(", ")}`,
+    );
+
+    const { data: avisos } = await c.from("avisos").select("titulo, turma_id");
+    verificar(
+      "vê o aviso escola-wide mas NÃO o aviso da turma do colega",
+      (avisos?.length ?? 0) >= 1 &&
+        avisos.every((a) => a.turma_id === null || a.turma_id === ids.turmas.girassois),
+      `viu: ${avisos?.map((a) => a.titulo).join(", ")}`,
+    );
+
+    const { data: msgsAlheias } = await c
+      .from("mensagens")
+      .select("id")
+      .or(
+        `remetente_id.eq.${ids.perfis.encMatilde},destinatario_id.eq.${ids.perfis.encMatilde}`,
+      );
+    verificar(
+      "NÃO vê a conversa entre a Carla e a Ana (não participa)",
+      (msgsAlheias?.length ?? 0) === 0,
     );
   }
 
@@ -248,6 +458,63 @@ async function main() {
       .single();
     verificar("consegue inscrever criança na sua escola", errPropria === null);
     if (nova) await c.from("criancas").delete().eq("id", nova.id);
+
+    // Comunicação: admin publica para toda a escola e fala com qualquer
+    // pessoa da sua escola, mas nunca atravessa a fronteira da escola.
+    const { data: avisos } = await c.from("avisos").select("id");
+    verificar(
+      "vê todos os avisos da sua escola (2)",
+      avisos?.length === 2,
+      `viu ${avisos?.length ?? 0}`,
+    );
+
+    const { data: avisoNovo, error: errAvisoEscola } = await c
+      .from("avisos")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        turma_id: null,
+        autor_id: ids.perfis.adminArcoIris,
+        titulo: "Aviso de teste da administração",
+        corpo: "…",
+      })
+      .select()
+      .single();
+    verificar("consegue publicar aviso para toda a escola", errAvisoEscola === null);
+    if (avisoNovo) await c.from("avisos").delete().eq("id", avisoNovo.id);
+
+    const { error: errAvisoOutraEscola } = await c.from("avisos").insert({
+      escola_id: ids.escolas.estrelinha,
+      turma_id: null,
+      autor_id: ids.perfis.adminArcoIris,
+      titulo: "Não devia conseguir publicar isto",
+      corpo: "…",
+    });
+    verificar(
+      "NÃO consegue publicar aviso noutra escola",
+      errAvisoOutraEscola !== null,
+    );
+
+    const { error: errMsgBruno } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.adminArcoIris,
+      destinatario_id: ids.perfis.staffGirassois,
+      corpo: "Mensagem de teste a qualquer pessoa da escola.",
+    });
+    verificar(
+      "consegue enviar mensagem a qualquer pessoa da sua escola",
+      errMsgBruno === null,
+    );
+
+    const { error: errMsgOutraEscola } = await c.from("mensagens").insert({
+      escola_id: ids.escolas.arcoIris,
+      remetente_id: ids.perfis.adminArcoIris,
+      destinatario_id: ids.perfis.adminEstrelinha,
+      corpo: "Não devia conseguir enviar isto.",
+    });
+    verificar(
+      "NÃO consegue enviar mensagem a alguém de outra escola",
+      errMsgOutraEscola !== null,
+    );
   }
 
   // -------------------------------------------------------------------
@@ -267,6 +534,22 @@ async function main() {
       "NÃO vê perfis da outra escola",
       pf?.length === 1,
       `viu ${pf?.length ?? 0}`,
+    );
+
+    const { data: avisosOutraEscola } = await c.from("avisos").select("id");
+    verificar(
+      "NÃO vê nenhum aviso da escola Arco-Íris",
+      (avisosOutraEscola?.length ?? 0) === 0,
+      `viu ${avisosOutraEscola?.length ?? 0}`,
+    );
+
+    const { data: mensagensOutraEscola } = await c
+      .from("mensagens")
+      .select("id");
+    verificar(
+      "NÃO vê nenhuma mensagem da escola Arco-Íris",
+      (mensagensOutraEscola?.length ?? 0) === 0,
+      `viu ${mensagensOutraEscola?.length ?? 0}`,
     );
   }
 
