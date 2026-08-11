@@ -35,9 +35,24 @@ Atualizar sempre que surgir algo relevante que não pertença ao CLAUDE.md.
   de servidor, que corriam em UTC na Vercel; corrigido de forma
   centralizada em `src/lib/data.ts`, aplicado também ao mural e às
   mensagens que tinham o mesmo problema). Etapa fechada.
+- ⏳ Etapa 5 — relatórios diários (refeições, sesta, fraldas, notas —
+  editável ao longo do dia) e fotos por turma. **Implementada em
+  código**, ainda **por verificar pessoalmente pelo utilizador**: faltam
+  aplicar as migrations 0014 a 0017 no Supabase e testar no preview da
+  Vercel. Primeira vez que a aplicação usa Supabase Storage — bucket
+  privado `fotos-turmas`, políticas baseadas no caminho do ficheiro
+  (`<escola_id>/<turma_id>/...`), tratado com o mesmo cuidado das
+  políticas de tabela por ser código crítico novo. Testar em especial:
+  upload de uma foto a sério (não só a de exemplo do seed) e confirmar
+  que um encarregado só vê fotos da turma do seu educando.
 - ⚠️ Ainda por fazer: **renomear o branch de trabalho** —
-  `claude/projeto-etapa-3-y7yviq` já tem as Etapas 3 e 4; o nome ficou
-  desatualizado mas não é urgente corrigir.
+  `claude/projeto-etapa-3-y7yviq` já tem as Etapas 3, 4 e 5; o nome
+  ficou desatualizado mas não é urgente corrigir.
+- 📝 O utilizador considerou dar acesso direto (Vercel + Supabase) a
+  esta sessão para aplicar migrations e fazer deploy sem o processo
+  manual de copiar/colar — decidiu **não avançar por agora** por ser
+  complexo de configurar. Mantemos o fluxo manual (colar SQL,
+  utilizador corre no Supabase, redeploy na Vercel).
 
 ## Referência de produto: Famly — comparação feita
 
