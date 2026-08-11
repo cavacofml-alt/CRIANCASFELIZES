@@ -38,6 +38,18 @@ export function PainelNav({
         Presenças
       </Link>
       <Link
+        href="/painel/relatorios"
+        className="transition-colors hover:text-black dark:hover:text-zinc-50"
+      >
+        Relatórios
+      </Link>
+      <Link
+        href="/painel/fotos"
+        className="transition-colors hover:text-black dark:hover:text-zinc-50"
+      >
+        Fotos
+      </Link>
+      <Link
         href="/painel/mensagens"
         className="flex items-center gap-1.5 transition-colors hover:text-black dark:hover:text-zinc-50"
       >
