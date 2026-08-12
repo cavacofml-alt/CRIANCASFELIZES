@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion } from "framer-motion";
 
 function Badge({ contagem }: { contagem: number }) {
   if (contagem <= 0) return null;
@@ -46,28 +45,15 @@ export function PainelNav({
           <Link
             key={l.href}
             href={l.href}
-            className="relative flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors hover:text-brand-ink dark:hover:text-brand-ink-dark"
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 transition-colors ${
+              ativo
+                ? "bg-brand-accent-soft font-semibold text-brand-accent dark:bg-brand-accent-soft-dark"
+                : "hover:text-brand-ink dark:hover:text-brand-ink-dark"
+            }`}
           >
-            {ativo && (
-              <motion.span
-                layoutId="painel-nav-ativo"
-                className="absolute inset-0 rounded-full bg-brand-accent-soft dark:bg-brand-accent-soft-dark"
-                transition={{ type: "spring", stiffness: 400, damping: 32 }}
-              />
-            )}
-            <span className="relative" aria-hidden="true">
-              {l.icone}
-            </span>
-            <span
-              className={`relative ${ativo ? "font-semibold text-brand-accent" : ""}`}
-            >
-              {l.rotulo}
-            </span>
-            {l.contagem && (
-              <span className="relative">
-                <Badge contagem={contagens[l.contagem]} />
-              </span>
-            )}
+            <span aria-hidden="true">{l.icone}</span>
+            <span>{l.rotulo}</span>
+            {l.contagem && <Badge contagem={contagens[l.contagem]} />}
           </Link>
         );
       })}
