@@ -171,6 +171,53 @@ Notificações push (item 2 do backlog acima) ficam mais fáceis de
 resolver bem numa app nativa do que numa PWA, sobretudo no iPhone —
 outro fator a pesar na escolha, quando chegar a altura.
 
+## Etapa 12 (implementada, fora das 10 etapas originais) — Reformulação UX
+
+Pedido pelo utilizador em 2026-08-12, com uma proposta de design
+própria (inspirada, segundo o utilizador, numa abordagem mais europeia/
+portuguesa do que o modelo "tipo Brightwheel" convencional). Ao
+contrário da Etapa 11, o utilizador pediu para avançar de imediato, não
+só registar a ideia — por isso já está implementada e no branch.
+
+O que mudou:
+
+- **Navegação da família** (`src/app/painel/nav.tsx`) passou a
+  depender do papel. Encarregados de educação veem 4 áreas: **Hoje**
+  (/painel, já existia), **Momentos** (/painel/fotos, já existia),
+  **Comunicação** (/painel/mensagens, já existia) e **Perfil** (nova).
+  O Mural e o histórico de Relatórios continuam a existir e acessíveis
+  por link, só deixaram de ter lugar fixo na barra de navegação da
+  família — não foi apagada nenhuma funcionalidade.
+- **Perfil da criança** (`/painel/perfil`, nova): mostra nome, data de
+  nascimento, turma e outros encarregados de educação ligados — tudo
+  dados que já existiam. **Não inclui ainda** alergias, autorizações de
+  quem pode levantar a criança, nem documentos — isso precisa de schema
+  novo (novas colunas/tabelas) e fica deliberadamente para uma fase
+  seguinte, para não se mexer em dados de saúde/autorização à pressa.
+- **Registo rápido do educador** (`/painel/registar`, nova, só staff/
+  admin): lista da turma → tocar numa criança → grelha de 5 ações
+  (Refeição, Sesta, Higiene, Fotografia, Observação) → cada uma
+  guardada em um ou dois toques, sem formulário longo. Reaproveita as
+  mesmas mutações já existentes de `relatorios_diarios` e `fotos` — não
+  foi preciso nenhuma migration nova para isto.
+- Ideia do "diário automático" (gerar texto a partir dos registos, com
+  IA) foi explicitamente adiada pelo utilizador — tem custos (chamadas
+  a uma API de IA) e implica mandar dados da criança para um serviço
+  externo, por isso só deve ser decidida mais tarde, depois do básico
+  do piloto estar validado.
+
+Testado contra a base de dados a sério (não só visualmente), com a
+conta de demonstração da educadora: registo de refeição, sesta e troca
+de fralda confirmados a gravar corretamente. Não houve alterações a
+RLS nem a schema — os 104 testes adversariais de segurança continuam
+todos a passar.
+
+**Por fazer, deliberadamente adiado** (ver tarefa registada): schema de
+"Desenvolvimento" (marcos de evolução da criança) e o resto do Perfil
+(alergias, autorizações, documentos) — precisam de migration nova e do
+mesmo cuidado de RLS que todo o resto do projeto trata como código
+crítico. Não avançar sem confirmar com o utilizador primeiro.
+
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
 - 🔑 **Rodar a chave `service_role` do Supabase.** Foi colada nesta
