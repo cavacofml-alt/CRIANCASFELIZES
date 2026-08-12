@@ -144,14 +144,32 @@ validada na escola piloto, Etapa 8).
    nova aparecer sozinha), isso é um item novo — usar o Supabase
    Realtime — e ainda não está implementado (hoje é preciso navegar/
    atualizar para ver dados novos).
-4. **Aplicação nativa iOS/Android para publicar nas stores** — item
-   novo e grande, fora do plano atual. Implica: conta de developer
-   Apple (~99 USD/ano) e Google Play (~25 USD uma vez, dado que o
-   CLAUDE.md pede para não introduzir custos sem discutir primeiro), e
-   escolher tecnologia (ex. React Native, ou embrulhar a app web numa
-   PWA instalável, mais barato mas com menos acesso a funcionalidades
-   do telemóvel). Por decidir âmbito, tecnologia e custos quando
-   chegar a altura.
+4. **Aplicação móvel** — promovido a etapa formal em 2026-08-12 (ver
+   "Etapa 11" abaixo), a pedido do utilizador. Fica na fila, depois da
+   Etapa 8 (dados reais do piloto).
+
+## Etapa 11 (proposta, fora das 10 etapas originais do CLAUDE.md) — Aplicação móvel
+
+Pedido pelo utilizador em 2026-08-12. Regista-se aqui, não no CLAUDE.md
+(esse ficheiro é a especificação original, mantida à parte). Só avança
+depois de a Etapa 8 estar concluída — combinado com o utilizador.
+
+Duas opções muito diferentes em esforço e custo, a decidir quando
+chegar a altura:
+
+- **PWA (recomendado para começar)** — a app web atual, instalável no
+  ecrã principal do telemóvel, ecrã inteiro, alguma funcionalidade
+  offline. Sem custos, sem lojas de aplicações, reaproveita todo o
+  código já feito.
+- **App nativa (React Native/Expo)** — publicada na App Store e Google
+  Play. Recriação dos ecrãs numa tecnologia diferente, mais trabalho.
+  Custos reais que o utilizador tem de autorizar e pagar diretamente:
+  conta Apple Developer (~99 USD/ano) e Google Play (~25 USD,
+  pagamento único).
+
+Notificações push (item 2 do backlog acima) ficam mais fáceis de
+resolver bem numa app nativa do que numa PWA, sobretudo no iPhone —
+outro fator a pesar na escolha, quando chegar a altura.
 
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
