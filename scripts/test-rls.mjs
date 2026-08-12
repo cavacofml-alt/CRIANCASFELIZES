@@ -17,10 +17,20 @@ import { CONTAS, PALAVRA_PASSE } from "./seed.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const ids = JSON.parse(
   readFileSync(new URL("./seed-ids.json", import.meta.url), "utf8"),
 );
+
+// Só para limpar linhas de teste criadas por staff: staff nunca tem
+// permissão de DELETE em presenças/relatórios (só admin — por desenho,
+// ver 0011/0015_*_rls.sql), por isso os próprios testes não conseguem
+// apagar o que criam. Usa a chave de serviço só para repor o estado
+// limpo entre execuções, nunca para testar autorização.
+const limpeza = createClient(url, serviceKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
 
 let passou = 0;
 let falhou = 0;
@@ -501,7 +511,7 @@ async function main() {
         })
         .eq("id", novaPresenca.id);
       verificar("consegue registar a saída da mesma criança", errSaida === null);
-      await c.from("presencas").delete().eq("id", novaPresenca.id);
+      await limpeza.from("presencas").delete().eq("id", novaPresenca.id);
     }
 
     const { error: errEntradaLeonor } = await c.from("presencas").insert({
@@ -547,7 +557,7 @@ async function main() {
         .update({ almoco: "comeu_metade" })
         .eq("id", novoRelatorio.id);
       verificar("consegue editar o relatório ao longo do dia", errRelatorioUpd === null);
-      await c.from("relatorios_diarios").delete().eq("id", novoRelatorio.id);
+      await limpeza.from("relatorios_diarios").delete().eq("id", novoRelatorio.id);
     }
 
     const { error: errRelatorioLeonor } = await c.from("relatorios_diarios").insert({

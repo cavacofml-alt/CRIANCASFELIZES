@@ -360,7 +360,14 @@ async function main() {
   );
 }
 
-main().catch((e) => {
-  console.error("\n✗ Falhou:", e.message);
-  process.exit(1);
-});
+// Só corre a seed automaticamente quando o ficheiro é executado
+// diretamente (`npm run seed`) — nunca quando é importado só para
+// reaproveitar `CONTAS`/`PALAVRA_PASSE`, como faz `test-rls.mjs`. Sem
+// esta condição, correr os testes voltava a apagar e recriar todos os
+// dados a meio da leitura, dando falsos negativos.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((e) => {
+    console.error("\n✗ Falhou:", e.message);
+    process.exit(1);
+  });
+}
