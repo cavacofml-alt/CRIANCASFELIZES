@@ -64,6 +64,7 @@ export default async function MuralPage() {
         </header>
 
         <PainelNav
+          papel={perfil.papel}
           contagemAvisos={contagemAvisos}
           contagemMensagens={contagemMensagens}
         />

@@ -75,6 +75,7 @@ export default async function FotosPage() {
         </header>
 
         <PainelNav
+          papel={perfil.papel}
           contagemAvisos={contagemAvisos}
           contagemMensagens={contagemMensagens}
         />

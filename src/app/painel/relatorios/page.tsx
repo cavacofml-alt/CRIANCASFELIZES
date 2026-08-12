@@ -67,6 +67,7 @@ export default async function RelatoriosPage() {
           </header>
 
           <PainelNav
+            papel={perfil.papel}
             contagemAvisos={contagemAvisos}
             contagemMensagens={contagemMensagens}
           />
@@ -190,6 +191,7 @@ export default async function RelatoriosPage() {
         </header>
 
         <PainelNav
+          papel={perfil.papel}
           contagemAvisos={contagemAvisos}
           contagemMensagens={contagemMensagens}
         />

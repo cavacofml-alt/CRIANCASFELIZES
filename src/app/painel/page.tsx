@@ -79,7 +79,7 @@ export default async function PainelPage() {
   );
 
   const nav = (
-    <PainelNav contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
+    <PainelNav papel={perfil.papel} contagemAvisos={contagemAvisos} contagemMensagens={contagemMensagens} />
   );
 
   // =====================================================================

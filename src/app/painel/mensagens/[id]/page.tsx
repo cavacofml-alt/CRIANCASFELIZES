@@ -23,7 +23,7 @@ export default async function ConversaPage({
 
   const { data: perfil } = await supabase
     .from("perfis")
-    .select("id, nome, escola_id")
+    .select("id, nome, papel, escola_id")
     .eq("id", user.id)
     .maybeSingle();
   if (!perfil) redirect("/painel");
@@ -80,6 +80,7 @@ export default async function ConversaPage({
         </header>
 
         <PainelNav
+          papel={perfil.papel}
           contagemAvisos={contagemAvisos}
           contagemMensagens={contagemMensagens}
         />

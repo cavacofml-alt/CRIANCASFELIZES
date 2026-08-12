@@ -60,6 +60,7 @@ export default async function PresencasPage() {
           </header>
 
           <PainelNav
+            papel={perfil.papel}
             contagemAvisos={contagemAvisos}
             contagemMensagens={contagemMensagens}
           />
@@ -174,6 +175,7 @@ export default async function PresencasPage() {
         </header>
 
         <PainelNav
+          papel={perfil.papel}
           contagemAvisos={contagemAvisos}
           contagemMensagens={contagemMensagens}
         />
