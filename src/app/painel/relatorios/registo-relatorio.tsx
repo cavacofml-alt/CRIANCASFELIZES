@@ -7,7 +7,6 @@ import { createClient } from "@/lib/supabase/client";
 import { CAMPO, BOTAO_PRIMARIO, BOTAO_SECUNDARIO } from "../estilos";
 
 const OPCOES_REFEICAO = [
-  { valor: "", etiqueta: "—" },
   { valor: "nao_comeu", etiqueta: "Não comeu" },
   { valor: "comeu_pouco", etiqueta: "Comeu pouco" },
   { valor: "comeu_metade", etiqueta: "Comeu metade" },
@@ -24,6 +23,45 @@ type Relatorio = {
   fraldas_trocadas: number;
   notas: string | null;
 };
+
+/** Um toque escolhe; tocar de novo na opção já escolhida limpa-a. */
+function SeletorRefeicao({
+  rotulo,
+  valor,
+  aoMudar,
+}: {
+  rotulo: string;
+  valor: string;
+  aoMudar: (novo: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-1">
+      <span className="text-xs text-brand-muted dark:text-brand-muted-dark">
+        {rotulo}
+      </span>
+      <div className="flex flex-wrap gap-1.5">
+        {OPCOES_REFEICAO.map((o) => {
+          const selecionado = valor === o.valor;
+          return (
+            <motion.button
+              key={o.valor}
+              type="button"
+              whileTap={{ scale: 0.95 }}
+              onClick={() => aoMudar(selecionado ? "" : o.valor)}
+              className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+                selecionado
+                  ? "border-brand-accent bg-brand-accent text-white"
+                  : "border-brand-border text-brand-muted hover:bg-brand-accent-soft dark:border-brand-border-dark dark:text-brand-muted-dark dark:hover:bg-brand-accent-soft-dark"
+              }`}
+            >
+              {o.etiqueta}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export function RegistoRelatorio({
   escolaId,
@@ -120,50 +158,13 @@ export function RegistoRelatorio({
         onSubmit={guardar}
         className="flex w-full flex-col gap-3 overflow-hidden rounded-xl border border-brand-border p-3 dark:border-brand-border-dark"
       >
-        <div className="grid grid-cols-3 gap-2">
-          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
-            Pequeno-almoço
-            <select
-              value={pequenoAlmoco}
-              onChange={(e) => setPequenoAlmoco(e.target.value)}
-              className={`${CAMPO} py-1.5`}
-            >
-              {OPCOES_REFEICAO.map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.etiqueta}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
-            Almoço
-            <select
-              value={almoco}
-              onChange={(e) => setAlmoco(e.target.value)}
-              className={`${CAMPO} py-1.5`}
-            >
-              {OPCOES_REFEICAO.map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.etiqueta}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
-            Lanche
-            <select
-              value={lanche}
-              onChange={(e) => setLanche(e.target.value)}
-              className={`${CAMPO} py-1.5`}
-            >
-              {OPCOES_REFEICAO.map((o) => (
-                <option key={o.valor} value={o.valor}>
-                  {o.etiqueta}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <SeletorRefeicao
+          rotulo="Pequeno-almoço"
+          valor={pequenoAlmoco}
+          aoMudar={setPequenoAlmoco}
+        />
+        <SeletorRefeicao rotulo="Almoço" valor={almoco} aoMudar={setAlmoco} />
+        <SeletorRefeicao rotulo="Lanche" valor={lanche} aoMudar={setLanche} />
 
         <div className="grid grid-cols-3 gap-2">
           <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
@@ -186,13 +187,27 @@ export function RegistoRelatorio({
           </label>
           <label className="flex flex-col gap-1 text-xs text-brand-muted dark:text-brand-muted-dark">
             Fraldas trocadas
-            <input
-              type="number"
-              min={0}
-              value={fraldas}
-              onChange={(e) => setFraldas(Number(e.target.value))}
-              className={`${CAMPO} py-1.5`}
-            />
+            <div className="flex items-center gap-2">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setFraldas((n) => Math.max(0, n - 1))}
+                className="h-7 w-7 shrink-0 rounded-full border border-brand-border text-brand-ink dark:border-brand-border-dark dark:text-brand-ink-dark"
+              >
+                −
+              </motion.button>
+              <span className="w-4 text-center text-sm font-semibold text-brand-ink dark:text-brand-ink-dark">
+                {fraldas}
+              </span>
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setFraldas((n) => n + 1)}
+                className="h-7 w-7 shrink-0 rounded-full border border-brand-border text-brand-ink dark:border-brand-border-dark dark:text-brand-ink-dark"
+              >
+                +
+              </motion.button>
+            </div>
           </label>
         </div>
 

@@ -181,15 +181,50 @@ export default async function PresencasPage() {
         <PageFade>
           <StaggerList className="flex flex-col gap-6">
             {grupos.length > 0 ? (
-              grupos.map((g) => (
-                <StaggerItem
-                  key={g.id}
-                  className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
-                >
-                  <h2 className="mb-3 font-semibold text-brand-ink dark:text-brand-ink-dark">
-                    {g.nome}
-                  </h2>
-                  <ul className="divide-y divide-brand-border dark:divide-brand-border-dark">
+              grupos.map((g) => {
+                const presentes = g.criancas.filter((c) => {
+                  const p = presencaPorCrianca.get(c.id);
+                  return p?.hora_entrada && !p.hora_saida;
+                }).length;
+                const porChegar = g.criancas.filter(
+                  (c) => !presencaPorCrianca.get(c.id)?.hora_entrada,
+                ).length;
+
+                return (
+                  <StaggerItem
+                    key={g.id}
+                    className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
+                  >
+                    <h2 className="mb-3 font-semibold text-brand-ink dark:text-brand-ink-dark">
+                      {g.nome}
+                    </h2>
+                    <div className="mb-4 grid grid-cols-3 gap-2">
+                      <div className="rounded-xl bg-brand-positive-soft p-3 text-center dark:bg-brand-positive-soft-dark">
+                        <p className="text-lg font-bold text-brand-positive">
+                          {presentes}
+                        </p>
+                        <p className="text-[11px] font-medium text-brand-positive">
+                          Presentes
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-brand-warn-soft p-3 text-center dark:bg-brand-warn-soft-dark">
+                        <p className="text-lg font-bold text-brand-warn">
+                          {porChegar}
+                        </p>
+                        <p className="text-[11px] font-medium text-brand-warn">
+                          Por chegar
+                        </p>
+                      </div>
+                      <div className="rounded-xl border border-brand-border p-3 text-center dark:border-brand-border-dark">
+                        <p className="text-lg font-bold text-brand-ink dark:text-brand-ink-dark">
+                          {g.criancas.length}
+                        </p>
+                        <p className="text-[11px] font-medium text-brand-muted dark:text-brand-muted-dark">
+                          Total
+                        </p>
+                      </div>
+                    </div>
+                    <ul className="divide-y divide-brand-border dark:divide-brand-border-dark">
                     {g.criancas.map((c) => (
                       <li
                         key={c.id}
@@ -208,9 +243,10 @@ export default async function PresencasPage() {
                         />
                       </li>
                     ))}
-                  </ul>
-                </StaggerItem>
-              ))
+                    </ul>
+                  </StaggerItem>
+                );
+              })
             ) : (
               <p className="text-sm text-brand-muted dark:text-brand-muted-dark">
                 Nenhuma criança visível.
