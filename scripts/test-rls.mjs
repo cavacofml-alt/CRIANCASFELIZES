@@ -923,6 +923,149 @@ async function main() {
   }
 
   // -------------------------------------------------------------------
+  console.log("\nCORREÇÕES DA AUDITORIA DE SEGURANÇA (Etapa 7)");
+  {
+    // M1/M2 — autoria de presenças e relatórios não pode ser reescrita
+    // por UPDATE (só era protegida no INSERT).
+    const ana = await sessao(CONTAS.staffBorboletas);
+
+    const { data: presencaMatilde } = await ana
+      .from("presencas")
+      .select("id")
+      .eq("crianca_id", ids.criancas.matilde)
+      .eq("data", "2026-08-10")
+      .single();
+    const { error: errFalsificarEntrada } = await ana
+      .from("presencas")
+      .update({ registado_entrada_por: ids.perfis.staffGirassois })
+      .eq("id", presencaMatilde.id);
+    verificar(
+      "NÃO consegue reatribuir a autoria do registo de entrada a outro colega",
+      errFalsificarEntrada !== null,
+    );
+
+    const { error: errFalsificarSaida } = await ana
+      .from("presencas")
+      .update({ registado_saida_por: ids.perfis.staffGirassois })
+      .eq("id", presencaMatilde.id);
+    verificar(
+      "NÃO consegue reatribuir a autoria do registo de saída já definido",
+      errFalsificarSaida !== null,
+    );
+
+    const { data: relatorioMatilde } = await ana
+      .from("relatorios_diarios")
+      .select("id")
+      .eq("crianca_id", ids.criancas.matilde)
+      .eq("data", "2026-08-10")
+      .single();
+    const { error: errFalsificarRelatorio } = await ana
+      .from("relatorios_diarios")
+      .update({ registado_por: ids.perfis.staffGirassois })
+      .eq("id", relatorioMatilde.id);
+    verificar(
+      "NÃO consegue reatribuir a autoria de um relatório diário a outro colega",
+      errFalsificarRelatorio !== null,
+    );
+
+    // Continua a poder editar o resto do relatório normalmente (a
+    // proteção é só sobre o campo de autoria).
+    const { error: errEditarNotas } = await ana
+      .from("relatorios_diarios")
+      .update({ notas: "Nota de teste da auditoria." })
+      .eq("id", relatorioMatilde.id);
+    verificar(
+      "continua a conseguir editar o resto do relatório (só a autoria é protegida)",
+      errEditarNotas === null,
+    );
+    await ana
+      .from("relatorios_diarios")
+      .update({ notas: "Dia tranquilo, brincou muito no recreio." })
+      .eq("id", relatorioMatilde.id);
+
+    // M6 — segunda camada (GRANT) tinha de estar mesmo fechada: nenhuma
+    // destas operações tem política de RLS, e agora também não tem GRANT.
+    const { error: errUpdateAviso } = await ana
+      .from("avisos")
+      .update({ titulo: "Título alterado indevidamente" })
+      .eq("escola_id", ids.escolas.arcoIris)
+      .limit(1);
+    verificar(
+      "NÃO consegue fazer UPDATE direto num aviso (sem política nem GRANT)",
+      errUpdateAviso !== null,
+    );
+
+    const { error: errUpdateMensagem } = await ana
+      .from("mensagens")
+      .update({ corpo: "Corpo alterado indevidamente" })
+      .eq("remetente_id", ids.perfis.encMatilde)
+      .limit(1);
+    verificar(
+      "NÃO consegue fazer UPDATE direto numa mensagem (sem política nem GRANT)",
+      errUpdateMensagem !== null,
+    );
+
+    const { error: errUpdateNotificacao } = await ana
+      .from("notificacoes")
+      .update({ lida: true })
+      .eq("perfil_id", ids.perfis.staffBorboletas)
+      .limit(1);
+    verificar(
+      "NÃO consegue fazer UPDATE direto numa notificação (só via RPC)",
+      errUpdateNotificacao !== null,
+    );
+
+    // M7 — um caminho de Storage mal formado (segmento de turma que não
+    // é um uuid) tem de ser negado, não rebentar com erro 500 e partir a
+    // galeria para toda a escola.
+    const { error: errCaminhoInvalido } = await ana.storage
+      .from("fotos-turmas")
+      .createSignedUrl(`${ids.escolas.arcoIris}/nao-e-um-uuid/exemplo.png`, 60);
+    verificar(
+      "caminho de Storage mal formado é negado (não dá erro interno)",
+      errCaminhoInvalido !== null &&
+        !errCaminhoInvalido.message?.toLowerCase().includes("invalid input syntax"),
+      errCaminhoInvalido?.message,
+    );
+
+    // A galeria da turma real continua a funcionar depois da tentativa
+    // com o caminho inválido (prova de que não bloqueou nada a mais).
+    const { error: errGaleriaContinuaAFuncionar } = await ana.storage
+      .from("fotos-turmas")
+      .createSignedUrl(`${ids.escolas.arcoIris}/${ids.turmas.borboletas}/exemplo.png`, 60);
+    verificar(
+      "a galeria da turma real continua a funcionar depois da tentativa inválida",
+      errGaleriaContinuaAFuncionar === null,
+    );
+
+    // M3/M5 — admin já não consegue ligar um perfil de outra escola (ou
+    // do papel errado) a uma turma/criança da sua escola.
+    const rita = await sessao(CONTAS.adminArcoIris);
+
+    const { error: errStaffTurmaAlheio } = await rita
+      .from("staff_turmas")
+      .insert({
+        staff_id: ids.perfis.adminEstrelinha,
+        turma_id: ids.turmas.borboletas,
+      });
+    verificar(
+      "NÃO consegue atribuir à sua turma um perfil de outra escola/papel errado",
+      errStaffTurmaAlheio !== null,
+    );
+
+    const { error: errEncarregadoAlheio } = await rita
+      .from("encarregados_criancas")
+      .insert({
+        encarregado_id: ids.perfis.adminEstrelinha,
+        crianca_id: ids.criancas.matilde,
+      });
+    verificar(
+      "NÃO consegue ligar à sua criança um perfil de outra escola/papel errado",
+      errEncarregadoAlheio !== null,
+    );
+  }
+
+  // -------------------------------------------------------------------
   console.log(`\n=== ${passou} passaram, ${falhou} falharam ===\n`);
   if (falhou > 0) {
     console.log("SEGURANÇA COMPROMETIDA — corrigir antes de avançar.\n");
