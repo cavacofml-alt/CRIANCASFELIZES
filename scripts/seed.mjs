@@ -37,31 +37,63 @@ export const CONTAS = {
   adminEstrelinha: { email: "paulo.admin@example.com", nome: "Paulo Moreira" },
 };
 
+/** Nomes fixos das escolas que este script cria — usados para encontrar
+ * e apagar só o que é seu, mesmo que os perfis já tenham sido apagados
+ * por outra via. Nunca apagar escolas por ordem geral: este script
+ * partilha o projeto Supabase com `seed-demo.mjs`, que cria a sua
+ * própria escola e não pode ser apagado por engano daqui. */
+const NOMES_ESCOLAS = ["Creche Arco-Íris (fictícia)", "Creche Estrelinha (fictícia)"];
+
 async function limpar() {
   console.log("A limpar dados fictícios anteriores…");
 
-  // A ordem respeita as chaves estrangeiras.
-  await db.from("fotos").delete().neq("id", ZERO_UUID);
-  await db.from("relatorios_diarios").delete().neq("id", ZERO_UUID);
-  await db.from("presencas").delete().neq("id", ZERO_UUID);
-  await db.from("notificacoes").delete().neq("id", ZERO_UUID);
-  await db.from("mensagens").delete().neq("id", ZERO_UUID);
-  await db.from("avisos").delete().neq("id", ZERO_UUID);
-  await db.from("staff_turmas").delete().neq("staff_id", ZERO_UUID);
-  await db.from("encarregados_criancas").delete().neq("crianca_id", ZERO_UUID);
-  await db.from("criancas").delete().neq("id", ZERO_UUID);
-  await db.from("perfis").delete().neq("id", ZERO_UUID);
-  await db.from("turmas").delete().neq("id", ZERO_UUID);
-  await db.from("escolas").delete().neq("id", ZERO_UUID);
-
   const emails = new Set(Object.values(CONTAS).map((c) => c.email));
   const { data } = await db.auth.admin.listUsers({ perPage: 1000 });
-  for (const u of data?.users ?? []) {
-    if (emails.has(u.email)) await db.auth.admin.deleteUser(u.id);
-  }
-}
+  const idsAntigos = (data?.users ?? [])
+    .filter((u) => emails.has(u.email))
+    .map((u) => u.id);
 
-const ZERO_UUID = "00000000-0000-0000-0000-000000000000";
+  const escolaIds = new Set();
+  if (idsAntigos.length > 0) {
+    const { data: perfisAntigos } = await db
+      .from("perfis")
+      .select("escola_id")
+      .in("id", idsAntigos);
+    for (const p of perfisAntigos ?? []) escolaIds.add(p.escola_id);
+  }
+  const { data: escolasPorNome } = await db
+    .from("escolas")
+    .select("id")
+    .in("nome", NOMES_ESCOLAS);
+  for (const e of escolasPorNome ?? []) escolaIds.add(e.id);
+
+  for (const escolaId of escolaIds) {
+    await db.from("fotos").delete().eq("escola_id", escolaId);
+    await db.from("relatorios_diarios").delete().eq("escola_id", escolaId);
+    await db.from("presencas").delete().eq("escola_id", escolaId);
+    await db.from("mensagens").delete().eq("escola_id", escolaId);
+    await db.from("avisos").delete().eq("escola_id", escolaId);
+
+    const { data: turmas } = await db.from("turmas").select("id").eq("escola_id", escolaId);
+    const turmaIds = (turmas ?? []).map((t) => t.id);
+    if (turmaIds.length > 0) {
+      await db.from("staff_turmas").delete().in("turma_id", turmaIds);
+    }
+
+    const { data: criancas } = await db.from("criancas").select("id").eq("escola_id", escolaId);
+    const criancaIds = (criancas ?? []).map((c) => c.id);
+    if (criancaIds.length > 0) {
+      await db.from("encarregados_criancas").delete().in("crianca_id", criancaIds);
+    }
+
+    await db.from("criancas").delete().eq("escola_id", escolaId);
+    await db.from("perfis").delete().eq("escola_id", escolaId);
+    await db.from("turmas").delete().eq("escola_id", escolaId);
+    await db.from("escolas").delete().eq("id", escolaId);
+  }
+
+  for (const id of idsAntigos) await db.auth.admin.deleteUser(id);
+}
 
 async function criarUtilizador(conta) {
   const { data, error } = await db.auth.admin.createUser({

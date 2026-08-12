@@ -13,6 +13,7 @@
  * Correr com:  npm run seed:demo
  */
 import { createClient } from "@supabase/supabase-js";
+import { readFileSync } from "node:fs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -267,18 +268,18 @@ async function main() {
   ]);
 
   console.log("A criar fotos de exemplo…");
-  const pngExemplo = Buffer.from(
-    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-    "base64",
-  );
-  for (const [turma, autorId, legenda] of [
-    [passarinhos, ids.staffPassarinhos, "Manhã de brincadeiras na turma Passarinhos."],
-    [estrelinhas, ids.staffEstrelinhas, "Atividade de pintura na turma Estrelinhas."],
+  // Imagens ilustrativas simples (não fotografias a sério, mas visíveis
+  // — ao contrário de um pixel transparente, que aparece como imagem
+  // partida na aplicação e fica mal numa demonstração).
+  for (const [turma, autorId, legenda, ficheiro] of [
+    [passarinhos, ids.staffPassarinhos, "Manhã de brincadeiras na turma Passarinhos.", "demo-passarinhos.png"],
+    [estrelinhas, ids.staffEstrelinhas, "Atividade de pintura na turma Estrelinhas.", "demo-estrelinhas.png"],
   ]) {
+    const imagem = readFileSync(new URL(`./assets/${ficheiro}`, import.meta.url));
     const caminho = `${escola.id}/${turma.id}/exemplo-${Date.now()}.png`;
     const { error: errUpload } = await db.storage
       .from("fotos-turmas")
-      .upload(caminho, pngExemplo, { contentType: "image/png", upsert: true });
+      .upload(caminho, imagem, { contentType: "image/png", upsert: true });
     if (errUpload) throw new Error(`Upload de foto: ${errUpload.message}`);
     await inserir("fotos", [
       { escola_id: escola.id, turma_id: turma.id, caminho, legenda, autor_id: autorId },
