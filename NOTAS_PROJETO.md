@@ -65,6 +65,16 @@ Atualizar sempre que surgir algo relevante que não pertença ao CLAUDE.md.
   automaticamente o `CLAUDE.md` (funcionalidade nova do Next.js,
   `agentRules`) — revertido e desativado em `next.config.ts` para não
   voltar a acontecer.
+- ⚠️ **Lição aprendida na Etapa 6**: a primeira passagem só repintou
+  cores em cada página, sem confirmar se o conteúdo batia certo com o
+  que tínhamos combinado. Resultado: o utilizador viu o "Início" e
+  reparou que não tinha nada a ver com a maqueta acordada. Auditoria
+  feita depois, a pedido do utilizador, encontrou mais dois desvios já
+  corrigidos: faltava a barra "Presentes/Por chegar/Total" nas
+  Presenças, e os Relatórios ainda usavam menus pendentes em vez dos
+  botões de um toque combinados. Regra para o futuro: ao terminar uma
+  etapa de UI, comparar cada ecrã com o que foi especificamente
+  combinado (não só com o tema geral) antes de pedir verificação.
 - ⚠️ Ainda por fazer: **renomear o branch de trabalho** —
   `claude/projeto-etapa-3-y7yviq` já tem as Etapas 3, 4 e 5; o nome
   ficou desatualizado mas não é urgente corrigir.
