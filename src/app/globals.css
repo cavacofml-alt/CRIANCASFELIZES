@@ -42,6 +42,21 @@
   --color-brand-warn: #b5810f;
   --color-brand-warn-soft: #fbf0d2;
   --color-brand-warn-soft-dark: #3a2d0d;
+
+  /* Cores semânticas por tipo de registo do dia — separadas da cor de
+     destaque, para o "resumo do dia" se distinguir num relance. */
+  --color-tile-meal: #2f9e4f;
+  --color-tile-meal-soft: #e5f6ea;
+  --color-tile-meal-soft-dark: #123320;
+  --color-tile-sleep: #7c5cd6;
+  --color-tile-sleep-soft: #efe9fc;
+  --color-tile-sleep-soft-dark: #251b3d;
+  --color-tile-diaper: #c99516;
+  --color-tile-diaper-soft: #fbf0d2;
+  --color-tile-diaper-soft-dark: #3a2d0d;
+  --color-tile-photo: #3d7dfa;
+  --color-tile-photo-soft: #e7edfd;
+  --color-tile-photo-soft-dark: #1b2740;
 }
 
 @media (prefers-color-scheme: dark) {

@@ -14,12 +14,17 @@ function Badge({ contagem }: { contagem: number }) {
 }
 
 const LIGACOES = [
-  { href: "/painel", rotulo: "Início" },
-  { href: "/painel/mural", rotulo: "Mural", contagem: "avisos" as const },
-  { href: "/painel/presencas", rotulo: "Presenças" },
-  { href: "/painel/relatorios", rotulo: "Relatórios" },
-  { href: "/painel/fotos", rotulo: "Fotos" },
-  { href: "/painel/mensagens", rotulo: "Mensagens", contagem: "mensagens" as const },
+  { href: "/painel", rotulo: "Início", icone: "🏠" },
+  { href: "/painel/mural", rotulo: "Mural", icone: "📌", contagem: "avisos" as const },
+  { href: "/painel/presencas", rotulo: "Presenças", icone: "✅" },
+  { href: "/painel/relatorios", rotulo: "Relatórios", icone: "📋" },
+  { href: "/painel/fotos", rotulo: "Fotos", icone: "📷" },
+  {
+    href: "/painel/mensagens",
+    rotulo: "Mensagens",
+    icone: "💬",
+    contagem: "mensagens" as const,
+  },
 ];
 
 export function PainelNav({
@@ -50,6 +55,9 @@ export function PainelNav({
                 transition={{ type: "spring", stiffness: 400, damping: 32 }}
               />
             )}
+            <span className="relative" aria-hidden="true">
+              {l.icone}
+            </span>
             <span
               className={`relative ${ativo ? "font-semibold text-brand-accent" : ""}`}
             >

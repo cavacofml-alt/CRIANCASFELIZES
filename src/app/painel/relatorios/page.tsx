@@ -5,6 +5,7 @@ import { hojeISO, formatarDataPT, formatarDataExtensaPT } from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { PageFade, StaggerList, StaggerItem } from "../motion";
+import { ResumoTile } from "../resumo-tile";
 import { RegistoRelatorio } from "./registo-relatorio";
 
 const ETIQUETA_REFEICAO: Record<string, string> = {
@@ -86,39 +87,42 @@ export default async function RelatoriosPage() {
                         {formatarDataPT(r.data)}
                       </span>
                     </div>
-                    <dl className="mt-3 grid grid-cols-3 gap-2 text-sm">
-                      <div>
-                        <dt className="text-brand-muted dark:text-brand-muted-dark">
-                          Pequeno-almoço
-                        </dt>
-                        <dd className="text-brand-ink dark:text-brand-ink-dark">
-                          {resumoRefeicao(r.pequeno_almoco)}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-brand-muted dark:text-brand-muted-dark">
-                          Almoço
-                        </dt>
-                        <dd className="text-brand-ink dark:text-brand-ink-dark">
-                          {resumoRefeicao(r.almoco)}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-brand-muted dark:text-brand-muted-dark">
-                          Lanche
-                        </dt>
-                        <dd className="text-brand-ink dark:text-brand-ink-dark">
-                          {resumoRefeicao(r.lanche)}
-                        </dd>
-                      </div>
-                    </dl>
-                    <p className="mt-3 text-sm text-brand-muted dark:text-brand-muted-dark">
-                      {r.sono_inicio
-                        ? `Sesta: ${r.sono_inicio.slice(0, 5)}${r.sono_fim ? ` – ${r.sono_fim.slice(0, 5)}` : ""}`
-                        : "Sem registo de sesta"}
-                      {" · "}
-                      Fraldas trocadas: {r.fraldas_trocadas}
-                    </p>
+                    <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
+                      <ResumoTile
+                        tipo="meal"
+                        emoji="🥣"
+                        rotulo="P. almoço"
+                        valor={resumoRefeicao(r.pequeno_almoco)}
+                      />
+                      <ResumoTile
+                        tipo="meal"
+                        emoji="🍎"
+                        rotulo="Almoço"
+                        valor={resumoRefeicao(r.almoco)}
+                      />
+                      <ResumoTile
+                        tipo="meal"
+                        emoji="🍪"
+                        rotulo="Lanche"
+                        valor={resumoRefeicao(r.lanche)}
+                      />
+                      <ResumoTile
+                        tipo="sleep"
+                        emoji="😴"
+                        rotulo="Sesta"
+                        valor={
+                          r.sono_inicio
+                            ? `${r.sono_inicio.slice(0, 5)}${r.sono_fim ? `–${r.sono_fim.slice(0, 5)}` : ""}`
+                            : "—"
+                        }
+                      />
+                      <ResumoTile
+                        tipo="diaper"
+                        emoji="🧷"
+                        rotulo="Fraldas"
+                        valor={`${r.fraldas_trocadas}×`}
+                      />
+                    </div>
                     {r.notas && (
                       <p className="mt-2 text-sm italic text-brand-muted dark:text-brand-muted-dark">
                         “{r.notas}”
