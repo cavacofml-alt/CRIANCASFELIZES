@@ -24,7 +24,7 @@ type Relatorio = {
   notas: string | null;
 };
 
-type Acao = "refeicao" | "sesta" | "higiene" | "foto" | "observacao";
+type Acao = "refeicao" | "sesta" | "higiene" | "foto" | "observacao" | "desenvolvimento";
 
 const ACOES: { chave: Acao; icone: string; rotulo: string }[] = [
   { chave: "refeicao", icone: "🍎", rotulo: "Refeição" },
@@ -32,7 +32,16 @@ const ACOES: { chave: Acao; icone: string; rotulo: string }[] = [
   { chave: "higiene", icone: "🧷", rotulo: "Higiene" },
   { chave: "foto", icone: "📷", rotulo: "Fotografia" },
   { chave: "observacao", icone: "📝", rotulo: "Observação" },
+  { chave: "desenvolvimento", icone: "❤️", rotulo: "Desenvolvimento" },
 ];
+
+const OPCOES_CATEGORIA = [
+  { valor: "motor", etiqueta: "Motor" },
+  { valor: "linguagem", etiqueta: "Linguagem" },
+  { valor: "social", etiqueta: "Social" },
+  { valor: "cognitivo", etiqueta: "Cognitivo" },
+  { valor: "autonomia", etiqueta: "Autonomia" },
+] as const;
 
 const DIACRITICOS = new RegExp(
   "[" + String.fromCharCode(0x0300) + "-" + String.fromCharCode(0x036f) + "]",
@@ -79,6 +88,9 @@ export function RegistoRapido({
   const [sonoFim, setSonoFim] = useState(relatorio?.sono_fim?.slice(0, 5) ?? "");
   const [fraldas, setFraldas] = useState(relatorio?.fraldas_trocadas ?? 0);
   const [notas, setNotas] = useState(relatorio?.notas ?? "");
+
+  const [categoriaMarco, setCategoriaMarco] = useState<string>("");
+  const [tituloMarco, setTituloMarco] = useState("");
 
   function assinalarFeito(acao: Acao) {
     setFeito(acao);
@@ -144,6 +156,33 @@ export function RegistoRapido({
     setFraldas(novo);
     const ok = await guardarRelatorio({ fraldas_trocadas: novo });
     if (ok) assinalarFeito("higiene");
+  }
+
+  async function guardarMarco() {
+    if (!categoriaMarco || !tituloMarco.trim()) {
+      setErro("Escolha uma categoria e escreva um título.");
+      return;
+    }
+    setAGuardar(true);
+    setErro(null);
+    const supabase = createClient();
+    const { error } = await supabase.from("marcos_desenvolvimento").insert({
+      escola_id: escolaId,
+      crianca_id: criancaId,
+      categoria: categoriaMarco,
+      titulo: tituloMarco.trim(),
+      registado_por: perfilId,
+    });
+    setAGuardar(false);
+    if (error) {
+      setErro("Não foi possível guardar o marco.");
+      return;
+    }
+    setCategoriaMarco("");
+    setTituloMarco("");
+    assinalarFeito("desenvolvimento");
+    setAberto(null);
+    router.refresh();
   }
 
   async function guardarObservacao() {
@@ -351,6 +390,44 @@ export function RegistoRapido({
             />
             <motion.button whileTap={{ scale: 0.96 }} disabled={aGuardar} onClick={guardarObservacao} className={BOTAO_PRIMARIO}>
               {aGuardar ? "A guardar…" : "Guardar observação"}
+            </motion.button>
+          </motion.div>
+        )}
+
+        {aberto === "desenvolvimento" && (
+          <motion.div
+            key="desenvolvimento"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.18 }}
+            className="flex flex-col items-start gap-3 overflow-hidden rounded-2xl border border-brand-border p-4 dark:border-brand-border-dark"
+          >
+            <div className="flex flex-wrap gap-1.5">
+              {OPCOES_CATEGORIA.map((o) => (
+                <motion.button
+                  key={o.valor}
+                  type="button"
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setCategoriaMarco(o.valor)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                    categoriaMarco === o.valor
+                      ? "border-brand-accent bg-brand-accent text-white"
+                      : "border-brand-border text-brand-muted hover:bg-brand-accent-soft dark:border-brand-border-dark dark:text-brand-muted-dark dark:hover:bg-brand-accent-soft-dark"
+                  }`}
+                >
+                  {o.etiqueta}
+                </motion.button>
+              ))}
+            </div>
+            <input
+              value={tituloMarco}
+              onChange={(e) => setTituloMarco(e.target.value)}
+              placeholder="Ex.: já consegue subir escadas sozinha"
+              className={`${CAMPO} w-full`}
+            />
+            <motion.button whileTap={{ scale: 0.96 }} disabled={aGuardar} onClick={guardarMarco} className={BOTAO_PRIMARIO}>
+              {aGuardar ? "A guardar…" : "Guardar marco"}
             </motion.button>
           </motion.div>
         )}
