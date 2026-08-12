@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# gerado por `npm run seed` — muda a cada execução, nunca é fonte de verdade
+scripts/seed-ids.json
