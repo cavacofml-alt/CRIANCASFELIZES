@@ -88,93 +88,92 @@ export default async function PainelPage() {
   if (perfil.papel === "encarregado") {
     const hoje = hojeISO();
 
-    const { data: criancas } = await supabase
-      .from("criancas")
-      .select("id, nome, turma_id")
-      .order("nome");
+    // Os três pedidos abaixo não dependem uns dos outros — correm em
+    // paralelo para poupar idas e vindas ao servidor (menos demora
+    // percetível ao navegar).
+    const [{ data: criancas }, { data: turmas }, { data: ultimaMensagem }] =
+      await Promise.all([
+        supabase.from("criancas").select("id, nome, turma_id").order("nome"),
+        supabase.from("turmas").select("id, nome").order("nome"),
+        supabase
+          .from("mensagens")
+          .select("remetente_id, destinatario_id, corpo, criado_em")
+          .or(`remetente_id.eq.${perfil.id},destinatario_id.eq.${perfil.id}`)
+          .order("criado_em", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-    const { data: turmas } = await supabase
-      .from("turmas")
-      .select("id, nome")
-      .order("nome");
     const nomeTurma = new Map((turmas ?? []).map((t) => [t.id, t.nome]));
     const indiceTurma = indicePorTurma(turmas ?? []);
 
     const idsCriancas = (criancas ?? []).map((c) => c.id);
-
-    const { data: presencasHoje } = idsCriancas.length
-      ? await supabase
-          .from("presencas")
-          .select("crianca_id, hora_entrada, hora_saida")
-          .eq("data", hoje)
-          .in("crianca_id", idsCriancas)
-      : { data: [] };
-    const presencaPorCrianca = new Map(
-      (presencasHoje ?? []).map((p) => [p.crianca_id, p]),
-    );
-
-    const { data: relatoriosHoje } = idsCriancas.length
-      ? await supabase
-          .from("relatorios_diarios")
-          .select(
-            "crianca_id, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas",
-          )
-          .eq("data", hoje)
-          .in("crianca_id", idsCriancas)
-      : { data: [] };
-    const relatorioPorCrianca = new Map(
-      (relatoriosHoje ?? []).map((r) => [r.crianca_id, r]),
-    );
-
     const idsTurmas = [
       ...new Set((criancas ?? []).map((c) => c.turma_id).filter(Boolean)),
     ] as string[];
 
-    const { data: fotos } = idsTurmas.length
-      ? await supabase
-          .from("fotos")
-          .select("id, turma_id, caminho, legenda, criado_em")
-          .in("turma_id", idsTurmas)
-          .order("criado_em", { ascending: false })
-          .limit(3)
-      : { data: [] };
+    const [{ data: presencasHoje }, { data: relatoriosHoje }, { data: fotos }] =
+      await Promise.all([
+        idsCriancas.length
+          ? supabase
+              .from("presencas")
+              .select("crianca_id, hora_entrada, hora_saida")
+              .eq("data", hoje)
+              .in("crianca_id", idsCriancas)
+          : Promise.resolve({ data: [] }),
+        idsCriancas.length
+          ? supabase
+              .from("relatorios_diarios")
+              .select(
+                "crianca_id, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas",
+              )
+              .eq("data", hoje)
+              .in("crianca_id", idsCriancas)
+          : Promise.resolve({ data: [] }),
+        idsTurmas.length
+          ? supabase
+              .from("fotos")
+              .select("id, turma_id, caminho, legenda, criado_em")
+              .in("turma_id", idsTurmas)
+              .order("criado_em", { ascending: false })
+              .limit(3)
+          : Promise.resolve({ data: [] }),
+      ]);
 
-    let urlPorCaminho = new Map<string, string>();
-    if (fotos && fotos.length > 0) {
-      const { data: assinadas } = await supabase.storage
-        .from("fotos-turmas")
-        .createSignedUrls(
-          fotos.map((f) => f.caminho),
-          UMA_HORA,
-        );
-      urlPorCaminho = new Map(
-        (assinadas ?? [])
-          .filter((a): a is typeof a & { signedUrl: string } => !!a.signedUrl)
-          .map((a) => [a.path ?? "", a.signedUrl]),
-      );
-    }
+    const presencaPorCrianca = new Map(
+      (presencasHoje ?? []).map((p) => [p.crianca_id, p]),
+    );
+    const relatorioPorCrianca = new Map(
+      (relatoriosHoje ?? []).map((r) => [r.crianca_id, r]),
+    );
 
-    const { data: ultimaMensagem } = await supabase
-      .from("mensagens")
-      .select("remetente_id, destinatario_id, corpo, criado_em")
-      .or(`remetente_id.eq.${perfil.id},destinatario_id.eq.${perfil.id}`)
-      .order("criado_em", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    const outroId = ultimaMensagem
+      ? ultimaMensagem.remetente_id === perfil.id
+        ? ultimaMensagem.destinatario_id
+        : ultimaMensagem.remetente_id
+      : null;
 
-    let nomeOutroContacto: string | null = null;
-    if (ultimaMensagem) {
-      const outroId =
-        ultimaMensagem.remetente_id === perfil.id
-          ? ultimaMensagem.destinatario_id
-          : ultimaMensagem.remetente_id;
-      const { data: outro } = await supabase
-        .from("perfis")
-        .select("nome")
-        .eq("id", outroId)
-        .maybeSingle();
-      nomeOutroContacto = outro?.nome ?? null;
-    }
+    const [assinadasResp, outroResp] = await Promise.all([
+      fotos && fotos.length > 0
+        ? supabase.storage
+            .from("fotos-turmas")
+            .createSignedUrls(
+              fotos.map((f) => f.caminho),
+              UMA_HORA,
+            )
+        : Promise.resolve({ data: [] }),
+      outroId
+        ? supabase.from("perfis").select("nome").eq("id", outroId).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    type UrlAssinado = { path: string | null; signedUrl: string | null };
+    const urlPorCaminho = new Map(
+      ((assinadasResp.data ?? []) as UrlAssinado[])
+        .filter((a): a is UrlAssinado & { signedUrl: string } => !!a.signedUrl)
+        .map((a) => [a.path ?? "", a.signedUrl]),
+    );
+    const nomeOutroContacto = outroResp.data?.nome ?? null;
 
     function resumoRefeicao(valor: string | null | undefined) {
       return valor ? ETIQUETA_REFEICAO[valor] : "—";
