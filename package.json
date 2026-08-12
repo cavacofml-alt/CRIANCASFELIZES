@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "node --env-file=.env.local scripts/seed.mjs",
+    "seed:demo": "node --env-file=.env.local scripts/seed-demo.mjs",
     "test:rls": "node --env-file=.env.local scripts/test-rls.mjs"
   },
   "dependencies": {

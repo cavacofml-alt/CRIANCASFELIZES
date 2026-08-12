@@ -188,6 +188,36 @@ Palavra-passe de todas: `Teste1234!`
 | diogo.pinto@example.com | encarregado (pai da Leonor) | Creche Arco-Íris |
 | paulo.admin@example.com | admin | Creche Estrelinha (escola vizinha, para testar isolamento) |
 
+Recriar com `npm run seed` sempre que precisares (apaga e recria do zero,
+nunca correr com dados reais).
+
+## Escola fictícia de demonstração (para apresentar o produto)
+
+Diferente das contas de teste acima — esta é pensada para mostrar a
+aplicação a alguém (a escola-piloto, por exemplo), com conteúdo mais
+rico e realista: avisos, conversas, presenças e relatórios já
+preenchidos com o dia de hoje. Criada com `npm run seed:demo`
+(`scripts/seed-demo.mjs`), independente das contas de teste — podes
+correr uma sem afetar a outra.
+
+Palavra-passe de todas: `Demo1234!`
+
+| Email | Papel | Turma |
+|---|---|---|
+| demo.mariana@example.com | admin (diretora) | — |
+| demo.ines@example.com | staff | Passarinhos |
+| demo.tiago@example.com | staff | Estrelinhas |
+| demo.sofia@example.com | encarregada (mãe da Beatriz) | Passarinhos |
+| demo.pedro@example.com | encarregado (pai do Gonçalo) | Passarinhos |
+| demo.catarina@example.com | encarregada (mãe da Francisca) | Estrelinhas |
+| demo.miguel@example.com | encarregado (pai do Rodrigo) | Estrelinhas |
+
+Escola: "Cantinho Feliz (demonstração)". Para uma apresentação ao vivo,
+a conta mais visual costuma ser a de admin (vê tudo) ou a de um
+encarregado (vê o "Hoje" da sua criança). Correr `npm run seed:demo`
+de novo a repor tudo antes de uma apresentação, se precisares de dados
+"frescos" do dia.
+
 ## Modelo de IA usado por etapa (para referência futura)
 
 - Etapa 1: Sonnet 5, esforço médio.
