@@ -606,6 +606,34 @@ async function main() {
       await c.storage.from("fotos-turmas").remove([caminhoFotoTeste]);
     }
 
+    // Marcar uma criança numa foto (achado real: isto despoletava uma
+    // recursão infinita entre as políticas de `fotos` e
+    // `foto_criancas` antes da correção 0026 — mantido como teste de
+    // regressão, não só de autorização.
+    const { data: fotoTeste, error: errFotoTeste } = await c
+      .from("fotos")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        turma_id: ids.turmas.borboletas,
+        caminho: `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/marcacao-${Date.now()}.png`,
+        autor_id: ids.perfis.staffBorboletas,
+      })
+      .select("id")
+      .single();
+    verificar("consegue criar o registo da foto", errFotoTeste === null);
+
+    if (fotoTeste) {
+      const { error: errMarcar } = await c
+        .from("foto_criancas")
+        .insert({ foto_id: fotoTeste.id, crianca_id: ids.criancas.matilde });
+      verificar(
+        "consegue marcar uma criança da sua turma na foto (sem recursão de RLS)",
+        errMarcar === null,
+        errMarcar?.message,
+      );
+      await limpeza.from("fotos").delete().eq("id", fotoTeste.id);
+    }
+
     const { error: errUploadOutraTurma } = await c.storage
       .from("fotos-turmas")
       .upload(
@@ -1131,6 +1159,257 @@ async function main() {
       "NÃO consegue ligar à sua criança um perfil de outra escola/papel errado",
       errEncarregadoAlheio !== null,
     );
+  }
+
+  // -------------------------------------------------------------------
+  console.log("\nPERFIL AVANÇADO (Etapa 12b/0020) — nunca antes testado");
+  {
+    const carla = await sessao(CONTAS.encMatilde);
+    const diogo = await sessao(CONTAS.encLeonor);
+    const ana = await sessao(CONTAS.staffBorboletas);
+    const bruno = await sessao(CONTAS.staffGirassois);
+
+    // --- autorizacoes_recolha ---------------------------------------
+    const { data: autNova, error: errAutInsert } = await carla
+      .from("autorizacoes_recolha")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.matilde,
+        nome: "Avó Fernanda",
+        parentesco: "Avó",
+        criado_por: ids.perfis.encMatilde,
+      })
+      .select("id")
+      .single();
+    verificar("encarregado consegue autorizar alguém a levantar o seu educando", errAutInsert === null);
+
+    const { error: errAutOutraCrianca } = await carla.from("autorizacoes_recolha").insert({
+      escola_id: ids.escolas.arcoIris,
+      crianca_id: ids.criancas.leonor,
+      nome: "Intruso",
+      criado_por: ids.perfis.encMatilde,
+    });
+    verificar(
+      "NÃO consegue autorizar alguém a levantar a criança de outra família",
+      errAutOutraCrianca !== null,
+    );
+
+    const { data: autVistasPorDiogo } = await diogo
+      .from("autorizacoes_recolha")
+      .select("id")
+      .eq("crianca_id", ids.criancas.matilde);
+    verificar(
+      "NÃO vê as autorizações de recolha de uma criança que não é sua",
+      (autVistasPorDiogo?.length ?? 0) === 0,
+      `viu ${autVistasPorDiogo?.length ?? 0}`,
+    );
+
+    if (autNova) {
+      const { error: errAutDeleteAlheia } = await diogo
+        .from("autorizacoes_recolha")
+        .delete()
+        .eq("id", autNova.id);
+      const { data: aindaExiste } = await limpeza
+        .from("autorizacoes_recolha")
+        .select("id")
+        .eq("id", autNova.id)
+        .maybeSingle();
+      verificar(
+        "NÃO consegue apagar uma autorização de recolha de outra família",
+        aindaExiste !== null,
+        String(errAutDeleteAlheia?.message),
+      );
+      await limpeza.from("autorizacoes_recolha").delete().eq("id", autNova.id);
+    }
+
+    // --- marcos_desenvolvimento --------------------------------------
+    const { data: marcoNovo, error: errMarcoInsert } = await ana
+      .from("marcos_desenvolvimento")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.matilde,
+        categoria: "motor",
+        titulo: "Já sobe escadas sozinha",
+        registado_por: ids.perfis.staffBorboletas,
+      })
+      .select("id")
+      .single();
+    verificar("educadora consegue registar um marco de desenvolvimento da sua turma", errMarcoInsert === null);
+
+    const { error: errMarcoOutraTurma } = await ana.from("marcos_desenvolvimento").insert({
+      escola_id: ids.escolas.arcoIris,
+      crianca_id: ids.criancas.leonor,
+      categoria: "motor",
+      titulo: "Não devia conseguir escrever isto",
+      registado_por: ids.perfis.staffBorboletas,
+    });
+    verificar(
+      "NÃO consegue registar marco de desenvolvimento de criança de outra turma",
+      errMarcoOutraTurma !== null,
+    );
+
+    const { data: marcosVistosPorDiogo } = await diogo
+      .from("marcos_desenvolvimento")
+      .select("id")
+      .eq("crianca_id", ids.criancas.matilde);
+    verificar(
+      "NÃO vê marcos de desenvolvimento de uma criança que não é sua",
+      (marcosVistosPorDiogo?.length ?? 0) === 0,
+      `viu ${marcosVistosPorDiogo?.length ?? 0}`,
+    );
+
+    const { data: marcosVistosPorCarla } = await carla
+      .from("marcos_desenvolvimento")
+      .select("id")
+      .eq("crianca_id", ids.criancas.matilde);
+    verificar(
+      "vê o marco de desenvolvimento da sua educanda",
+      (marcosVistosPorCarla?.length ?? 0) === 1,
+      `viu ${marcosVistosPorCarla?.length ?? 0}`,
+    );
+
+    if (marcoNovo) await limpeza.from("marcos_desenvolvimento").delete().eq("id", marcoNovo.id);
+
+    // --- documentos_crianca (metadados + Storage) --------------------
+    const caminhoDocMatilde = `${ids.escolas.arcoIris}/${ids.criancas.matilde}/autorizacao-${Date.now()}.pdf`;
+    const { error: errDocUpload } = await carla.storage
+      .from("documentos-criancas")
+      .upload(caminhoDocMatilde, new Blob(["%PDF conteúdo fictício"], { type: "application/pdf" }));
+    verificar("encarregado consegue enviar um documento do seu educando", errDocUpload === null);
+
+    const { data: docNovo, error: errDocInsert } = await carla
+      .from("documentos_crianca")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.matilde,
+        caminho: caminhoDocMatilde,
+        nome_ficheiro: "autorizacao.pdf",
+        autor_id: ids.perfis.encMatilde,
+      })
+      .select("id")
+      .single();
+    verificar("consegue guardar os metadados do documento", errDocInsert === null);
+
+    const { data: docsVistosPorDiogo } = await diogo
+      .from("documentos_crianca")
+      .select("id")
+      .eq("crianca_id", ids.criancas.matilde);
+    verificar(
+      "NÃO vê documentos de uma criança que não é sua",
+      (docsVistosPorDiogo?.length ?? 0) === 0,
+      `viu ${docsVistosPorDiogo?.length ?? 0}`,
+    );
+
+    const { data: docsVistosPorAna } = await ana
+      .from("documentos_crianca")
+      .select("id")
+      .eq("crianca_id", ids.criancas.matilde);
+    verificar(
+      "a educadora da turma vê o documento (equipa da turma, não é vazamento entre famílias)",
+      (docsVistosPorAna?.length ?? 0) === 1,
+      `viu ${docsVistosPorAna?.length ?? 0}`,
+    );
+
+    const { error: errDocLinkDiogo } = await diogo.storage
+      .from("documentos-criancas")
+      .createSignedUrl(caminhoDocMatilde, 60);
+    verificar(
+      "NÃO consegue gerar link para o documento de uma criança que não é sua",
+      errDocLinkDiogo !== null,
+    );
+
+    const { error: errDocCaminhoFalsificado } = await carla.storage
+      .from("documentos-criancas")
+      .upload(
+        `${ids.escolas.arcoIris}/${ids.criancas.leonor}/intruso-${Date.now()}.pdf`,
+        new Blob(["x"], { type: "application/pdf" }),
+      );
+    verificar(
+      "NÃO consegue enviar documento para a pasta de outra criança",
+      errDocCaminhoFalsificado !== null,
+    );
+
+    if (docNovo) await limpeza.from("documentos_crianca").delete().eq("id", docNovo.id);
+    await limpeza.storage.from("documentos-criancas").remove([caminhoDocMatilde]);
+
+    // --- avatares-criancas (Storage) + criancas.foto_caminho ----------
+    const caminhoAvatarMatilde = `${ids.escolas.arcoIris}/${ids.criancas.matilde}/avatar.png`;
+    const { error: errAvatarUploadAna } = await ana.storage
+      .from("avatares-criancas")
+      .upload(caminhoAvatarMatilde, new Blob(["x"], { type: "image/png" }), { upsert: true });
+    verificar("educadora consegue enviar o avatar de uma criança da sua turma", errAvatarUploadAna === null);
+
+    const { error: errAvatarUploadBruno } = await bruno.storage
+      .from("avatares-criancas")
+      .upload(
+        `${ids.escolas.arcoIris}/${ids.criancas.matilde}/intruso.png`,
+        new Blob(["x"], { type: "image/png" }),
+      );
+    verificar(
+      "NÃO consegue enviar avatar de uma criança de outra turma",
+      errAvatarUploadBruno !== null,
+    );
+
+    const { error: errFotoCaminhoAna } = await ana
+      .from("criancas")
+      .update({ foto_caminho: caminhoAvatarMatilde })
+      .eq("id", ids.criancas.matilde);
+    verificar("educadora consegue associar o avatar enviado à criança", errFotoCaminhoAna === null);
+
+    const { error: errFotoCaminhoFalsificado } = await ana
+      .from("criancas")
+      .update({
+        foto_caminho: `${ids.escolas.estrelinha}/${ids.criancas.iris}/roubado.png`,
+      })
+      .eq("id", ids.criancas.matilde);
+    verificar(
+      "NÃO consegue gravar em foto_caminho um caminho de outra escola/criança",
+      errFotoCaminhoFalsificado !== null,
+    );
+
+    const { error: errAvatarLinkDiogo } = await diogo.storage
+      .from("avatares-criancas")
+      .createSignedUrl(caminhoAvatarMatilde, 60);
+    verificar(
+      "NÃO consegue gerar link do avatar de uma criança que não é sua",
+      errAvatarLinkDiogo !== null,
+    );
+
+    const { error: errAvatarLinkCarla } = await carla.storage
+      .from("avatares-criancas")
+      .createSignedUrl(caminhoAvatarMatilde, 60);
+    verificar("consegue gerar link do avatar da sua educanda", errAvatarLinkCarla === null);
+
+    await limpeza.from("criancas").update({ foto_caminho: null }).eq("id", ids.criancas.matilde);
+    await limpeza.storage.from("avatares-criancas").remove([caminhoAvatarMatilde]);
+
+    // --- defesa em profundidade: mensagens ganham verificação de escola
+    // (0024) mesmo sabendo o id exato de uma mensagem doutra escola —
+    // criada diretamente com service_role porque as políticas de
+    // INSERT já impediriam Ana de a criar ela própria (é precisamente
+    // isso que a política de SELECT não devia ter de depender sozinha).
+    const { data: mensagemOutraEscola } = await limpeza
+      .from("mensagens")
+      .insert({
+        escola_id: ids.escolas.estrelinha,
+        remetente_id: ids.perfis.adminEstrelinha,
+        destinatario_id: ids.perfis.staffGirassois,
+        corpo: "Mensagem interna da Estrelinha.",
+      })
+      .select("id")
+      .single();
+    if (mensagemOutraEscola) {
+      const { data: vistaPorBruno } = await bruno
+        .from("mensagens")
+        .select("id")
+        .eq("id", mensagemOutraEscola.id);
+      verificar(
+        "NÃO vê uma mensagem de outra escola mesmo sabendo o id exato",
+        (vistaPorBruno?.length ?? 0) === 0,
+        `viu ${vistaPorBruno?.length ?? 0}`,
+      );
+      await limpeza.from("mensagens").delete().eq("id", mensagemOutraEscola.id);
+    }
   }
 
   // -------------------------------------------------------------------
