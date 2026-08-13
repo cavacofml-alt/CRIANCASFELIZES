@@ -3,9 +3,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { hojeISO } from "@/lib/data";
+import { assinarAvatares } from "@/lib/avatares";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { PageFade, StaggerList, StaggerItem } from "../motion";
+import { Avatar } from "../avatar";
 
 export default async function RegistarPage() {
   const supabase = await createClient();
@@ -35,8 +37,13 @@ export default async function RegistarPage() {
 
   const { data: criancas } = await supabase
     .from("criancas")
-    .select("id, nome, turma_id")
+    .select("id, nome, turma_id, foto_caminho")
     .order("nome");
+
+  const avatares = await assinarAvatares(
+    supabase,
+    (criancas ?? []).map((c) => c.foto_caminho),
+  );
 
   const { data: presencasHoje } = await supabase
     .from("presencas")
@@ -100,13 +107,20 @@ export default async function RegistarPage() {
                             href={`/painel/registar/${c.id}`}
                             className="flex items-center justify-between gap-3 py-3 transition-colors hover:text-brand-accent"
                           >
-                            <span className="flex items-center gap-2 text-brand-ink dark:text-brand-ink-dark">
-                              <span
-                                aria-hidden="true"
-                                className={`h-2 w-2 rounded-full ${
-                                  presente ? "bg-brand-positive" : "bg-brand-border dark:bg-brand-border-dark"
-                                }`}
-                              />
+                            <span className="flex items-center gap-3 text-brand-ink dark:text-brand-ink-dark">
+                              <span className="relative">
+                                <Avatar
+                                  nome={c.nome}
+                                  src={c.foto_caminho ? avatares.get(c.foto_caminho) : null}
+                                  tamanho="sm"
+                                />
+                                <span
+                                  aria-hidden="true"
+                                  className={`absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-brand-surface dark:border-brand-surface-dark ${
+                                    presente ? "bg-brand-positive" : "bg-brand-border dark:bg-brand-border-dark"
+                                  }`}
+                                />
+                              </span>
                               {c.nome}
                             </span>
                             <span className="text-brand-muted dark:text-brand-muted-dark">›</span>

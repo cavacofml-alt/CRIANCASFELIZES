@@ -4,10 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { hojeISO, formatarHoraPT, formatarDataHoraPT } from "@/lib/data";
 import { corTurma, indicePorTurma } from "@/lib/turmas";
+import { assinarAvatares } from "@/lib/avatares";
 import { BotaoSair } from "./botao-sair";
 import { PainelNav } from "./nav";
 import { PageFade, StaggerList, StaggerItem } from "./motion";
 import { ResumoTile } from "./resumo-tile";
+import { Avatar } from "./avatar";
 
 const ETIQUETA_PAPEL: Record<string, string> = {
   admin: "Administração",
@@ -93,7 +95,10 @@ export default async function PainelPage() {
     // percetível ao navegar).
     const [{ data: criancas }, { data: turmas }, { data: ultimaMensagem }] =
       await Promise.all([
-        supabase.from("criancas").select("id, nome, turma_id").order("nome"),
+        supabase
+          .from("criancas")
+          .select("id, nome, turma_id, foto_caminho")
+          .order("nome"),
         supabase.from("turmas").select("id, nome").order("nome"),
         supabase
           .from("mensagens")
@@ -174,6 +179,10 @@ export default async function PainelPage() {
         .map((a) => [a.path ?? "", a.signedUrl]),
     );
     const nomeOutroContacto = outroResp.data?.nome ?? null;
+    const avatares = await assinarAvatares(
+      supabase,
+      (criancas ?? []).map((c) => c.foto_caminho),
+    );
 
     function resumoRefeicao(valor: string | null | undefined) {
       return valor ? ETIQUETA_REFEICAO[valor] : "—";
@@ -209,17 +218,24 @@ export default async function PainelPage() {
                       className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <h2 className="font-semibold text-brand-ink dark:text-brand-ink-dark">
-                            {c.nome}
-                          </h2>
-                          {c.turma_id && cor && (
-                            <span
-                              className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${cor.bg} ${cor.texto}`}
-                            >
-                              {nomeTurma.get(c.turma_id)}
-                            </span>
-                          )}
+                        <div className="flex items-center gap-3">
+                          <Avatar
+                            nome={c.nome}
+                            src={c.foto_caminho ? avatares.get(c.foto_caminho) : null}
+                            tamanho="lg"
+                          />
+                          <div>
+                            <h2 className="font-semibold text-brand-ink dark:text-brand-ink-dark">
+                              {c.nome}
+                            </h2>
+                            {c.turma_id && cor && (
+                              <span
+                                className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${cor.bg} ${cor.texto}`}
+                              >
+                                {nomeTurma.get(c.turma_id)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                         {presenca?.hora_entrada && !presenca.hora_saida && (
                           <span className="flex items-center gap-1.5 rounded-full bg-brand-positive-soft px-3 py-1 text-xs font-semibold text-brand-positive dark:bg-brand-positive-soft-dark">

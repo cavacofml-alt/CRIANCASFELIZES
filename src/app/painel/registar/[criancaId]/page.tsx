@@ -3,10 +3,12 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { hojeISO } from "@/lib/data";
+import { assinarAvatares } from "@/lib/avatares";
 import { BotaoSair } from "../../botao-sair";
 import { PainelNav } from "../../nav";
 import { PageFade } from "../../motion";
 import { RegistoRapido } from "./registo-rapido";
+import { AvatarUpload } from "./avatar-upload";
 
 export default async function RegistarCriancaPage({
   params,
@@ -31,10 +33,13 @@ export default async function RegistarCriancaPage({
 
   const { data: crianca } = await supabase
     .from("criancas")
-    .select("id, nome, turma_id")
+    .select("id, nome, turma_id, foto_caminho")
     .eq("id", criancaId)
     .maybeSingle();
   if (!crianca) notFound();
+
+  const avatares = await assinarAvatares(supabase, [crianca.foto_caminho]);
+  const fotoUrl = crianca.foto_caminho ? (avatares.get(crianca.foto_caminho) ?? null) : null;
 
   const hoje = hojeISO();
 
@@ -75,6 +80,14 @@ export default async function RegistarCriancaPage({
         />
 
         <PageFade>
+          <div className="mb-6">
+            <AvatarUpload
+              escolaId={perfil.escola_id}
+              criancaId={crianca.id}
+              nome={crianca.nome}
+              fotoUrl={fotoUrl}
+            />
+          </div>
           <RegistoRapido
             escolaId={perfil.escola_id}
             criancaId={crianca.id}

@@ -7,9 +7,11 @@ import {
   formatarDataPT,
   formatarDataExtensaPT,
 } from "@/lib/data";
+import { assinarAvatares } from "@/lib/avatares";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { PageFade, StaggerList, StaggerItem } from "../motion";
+import { Avatar } from "../avatar";
 import { RegistoPresenca } from "./registo-presenca";
 
 export default async function PresencasPage() {
@@ -112,8 +114,13 @@ export default async function PresencasPage() {
 
   const { data: criancas } = await supabase
     .from("criancas")
-    .select("id, nome, turma_id")
+    .select("id, nome, turma_id, foto_caminho")
     .order("nome");
+
+  const avatares = await assinarAvatares(
+    supabase,
+    (criancas ?? []).map((c) => c.foto_caminho),
+  );
 
   const { data: presencasHoje } = await supabase
     .from("presencas")
@@ -232,7 +239,12 @@ export default async function PresencasPage() {
                         key={c.id}
                         className="flex items-center justify-between gap-4 py-3"
                       >
-                        <span className="text-brand-ink dark:text-brand-ink-dark">
+                        <span className="flex items-center gap-3 text-brand-ink dark:text-brand-ink-dark">
+                          <Avatar
+                            nome={c.nome}
+                            src={c.foto_caminho ? avatares.get(c.foto_caminho) : null}
+                            tamanho="sm"
+                          />
                           {c.nome}
                         </span>
                         <RegistoPresenca

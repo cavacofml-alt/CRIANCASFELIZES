@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { formatarDataPT } from "@/lib/data";
 import { corTurma, indicePorTurma } from "@/lib/turmas";
+import { assinarAvatares } from "@/lib/avatares";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { PageFade, StaggerList, StaggerItem } from "../motion";
+import { Avatar } from "../avatar";
 import { AutorizacoesRecolha } from "./autorizacao-form";
 import { DocumentosCrianca } from "./documento-form";
 
@@ -41,10 +43,15 @@ export default async function PerfilPage() {
 
   const { data: criancas } = await supabase
     .from("criancas")
-    .select("id, nome, data_nascimento, turma_id, alergias, notas_saude")
+    .select("id, nome, data_nascimento, turma_id, alergias, notas_saude, foto_caminho")
     .order("nome");
 
   const criancaIds = (criancas ?? []).map((c) => c.id);
+
+  const avatares = await assinarAvatares(
+    supabase,
+    (criancas ?? []).map((c) => c.foto_caminho),
+  );
 
   const { data: turmas } = await supabase.from("turmas").select("id, nome");
   const nomeTurma = new Map((turmas ?? []).map((t) => [t.id, t.nome]));
@@ -138,16 +145,23 @@ export default async function PerfilPage() {
                   >
                     <div>
                       <div className="flex items-center gap-3">
-                        <h2 className="text-lg font-semibold text-brand-ink dark:text-brand-ink-dark">
-                          {c.nome}
-                        </h2>
-                        {c.turma_id != null && cor && (
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${cor.bg} ${cor.texto}`}
-                          >
-                            {nomeTurma.get(c.turma_id) ?? "—"}
-                          </span>
-                        )}
+                        <Avatar
+                          nome={c.nome}
+                          src={c.foto_caminho ? avatares.get(c.foto_caminho) : null}
+                          tamanho="lg"
+                        />
+                        <div>
+                          <h2 className="text-lg font-semibold text-brand-ink dark:text-brand-ink-dark">
+                            {c.nome}
+                          </h2>
+                          {c.turma_id != null && cor && (
+                            <span
+                              className={`mt-1 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${cor.bg} ${cor.texto}`}
+                            >
+                              {nomeTurma.get(c.turma_id) ?? "—"}
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
