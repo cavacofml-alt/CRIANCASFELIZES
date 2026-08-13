@@ -350,6 +350,31 @@ de avançar mais para a Etapa 8. Detalhe completo em
 - `npm run test:rls`: **131/131 testes a passar** no final (eram 104
   antes desta ronda).
 
+## PowerPoint de apresentação — atualizado (2026-08-13)
+
+Refeito com capturas de ecrã novas, refletindo tudo o que mudou desde
+a última versão: navegação de 5 áreas da família (com Desenvolvimento
+separado do Perfil), avatares em todas as vistas, Perfil em
+separadores, filtro de dia em Momentos, avatares na Comunicação, e uma
+nova slide dedicada ao Perfil/Desenvolvimento. A slide de segurança
+passou a mencionar as duas rondas de auditoria e os 131 testes. A
+slide do telemóvel deixou de falar da PWA como algo "a caminho" — já
+está construída e o texto reflete isso.
+
+Nota técnica: para as capturas ficarem apresentáveis, a escola de
+demonstração (`seed-demo.mjs`) passou a marcar as fotos com as
+crianças certas (senão "Momentos" aparecia vazio, por causa da nova
+regra de privacidade por criança) e a ter marcos de desenvolvimento e
+autorizações de recolha de exemplo.
+
+Como sempre neste ambiente, o LibreOffice não consegue abrir/renderizar
+`.pptx` aqui (confirmado outra vez, mesmo erro de sempre) — a
+verificação visual final foi feita ecrã a ecrã, inspecionando cada
+captura antes de a colocar no deck, mais a validação estrutural
+automática (`validate.py`, sem erros) e de conteúdo (`markitdown`,
+sem placeholders esquecidos). Recomendo uma vista de olhos rápida no
+PowerPoint a abrir mesmo antes de o usar numa reunião a sério.
+
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
 - 🔑 **Rodar a chave `service_role` do Supabase.** Foi colada nesta
