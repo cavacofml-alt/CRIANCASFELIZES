@@ -21,8 +21,8 @@
 -- nenhuma política nova.
 
 alter table public.criancas
-  add column alergias text,
-  add column notas_saude text;
+  add column if not exists alergias text,
+  add column if not exists notas_saude text;
 
 
 -- ---------------------------------------------------------------------
@@ -32,7 +32,7 @@ alter table public.criancas
 --    pontual de quem levantou naquele dia.
 -- ---------------------------------------------------------------------
 
-create table public.autorizacoes_recolha (
+create table if not exists public.autorizacoes_recolha (
   id uuid primary key default gen_random_uuid(),
   escola_id uuid not null references public.escolas (id) on delete cascade,
   crianca_id uuid not null,
@@ -45,10 +45,11 @@ create table public.autorizacoes_recolha (
     references public.criancas (id, escola_id) on delete cascade
 );
 
-create index autorizacoes_recolha_crianca_id_idx on public.autorizacoes_recolha (crianca_id);
+create index if not exists autorizacoes_recolha_crianca_id_idx on public.autorizacoes_recolha (crianca_id);
 
 alter table public.autorizacoes_recolha enable row level security;
 
+drop policy if exists "autorizacoes_recolha_select_admin" on public.autorizacoes_recolha;
 create policy "autorizacoes_recolha_select_admin"
   on public.autorizacoes_recolha for select to authenticated
   using (
@@ -56,6 +57,7 @@ create policy "autorizacoes_recolha_select_admin"
     and crianca_id in (select public.auth_criancas_da_escola())
   );
 
+drop policy if exists "autorizacoes_recolha_select_staff" on public.autorizacoes_recolha;
 create policy "autorizacoes_recolha_select_staff"
   on public.autorizacoes_recolha for select to authenticated
   using (
@@ -63,6 +65,7 @@ create policy "autorizacoes_recolha_select_staff"
     and crianca_id in (select public.auth_criancas_staff())
   );
 
+drop policy if exists "autorizacoes_recolha_select_encarregado" on public.autorizacoes_recolha;
 create policy "autorizacoes_recolha_select_encarregado"
   on public.autorizacoes_recolha for select to authenticated
   using (
@@ -74,6 +77,7 @@ create policy "autorizacoes_recolha_select_encarregado"
 -- encarregado de educação gere a lista dos seus educandos — é a forma
 -- mais direta de a família manter isto atualizado, sem depender de
 -- pedir à escola para cada alteração.
+drop policy if exists "autorizacoes_recolha_insert_admin" on public.autorizacoes_recolha;
 create policy "autorizacoes_recolha_insert_admin"
   on public.autorizacoes_recolha for insert to authenticated
   with check (
@@ -83,6 +87,7 @@ create policy "autorizacoes_recolha_insert_admin"
     and criado_por = (select auth.uid())
   );
 
+drop policy if exists "autorizacoes_recolha_insert_encarregado" on public.autorizacoes_recolha;
 create policy "autorizacoes_recolha_insert_encarregado"
   on public.autorizacoes_recolha for insert to authenticated
   with check (
@@ -92,6 +97,7 @@ create policy "autorizacoes_recolha_insert_encarregado"
     and criado_por = (select auth.uid())
   );
 
+drop policy if exists "autorizacoes_recolha_delete_admin" on public.autorizacoes_recolha;
 create policy "autorizacoes_recolha_delete_admin"
   on public.autorizacoes_recolha for delete to authenticated
   using (
@@ -99,6 +105,7 @@ create policy "autorizacoes_recolha_delete_admin"
     and crianca_id in (select public.auth_criancas_da_escola())
   );
 
+drop policy if exists "autorizacoes_recolha_delete_encarregado" on public.autorizacoes_recolha;
 create policy "autorizacoes_recolha_delete_encarregado"
   on public.autorizacoes_recolha for delete to authenticated
   using (
@@ -116,7 +123,7 @@ grant select, insert, delete on public.autorizacoes_recolha to authenticated;
 --    como em `relatorios_diarios`).
 -- ---------------------------------------------------------------------
 
-create table public.marcos_desenvolvimento (
+create table if not exists public.marcos_desenvolvimento (
   id uuid primary key default gen_random_uuid(),
   escola_id uuid not null references public.escolas (id) on delete cascade,
   crianca_id uuid not null,
@@ -130,10 +137,11 @@ create table public.marcos_desenvolvimento (
     references public.criancas (id, escola_id) on delete cascade
 );
 
-create index marcos_desenvolvimento_crianca_id_idx on public.marcos_desenvolvimento (crianca_id, data);
+create index if not exists marcos_desenvolvimento_crianca_id_idx on public.marcos_desenvolvimento (crianca_id, data);
 
 alter table public.marcos_desenvolvimento enable row level security;
 
+drop policy if exists "marcos_desenvolvimento_select_admin" on public.marcos_desenvolvimento;
 create policy "marcos_desenvolvimento_select_admin"
   on public.marcos_desenvolvimento for select to authenticated
   using (
@@ -141,6 +149,7 @@ create policy "marcos_desenvolvimento_select_admin"
     and escola_id = public.auth_escola_id()
   );
 
+drop policy if exists "marcos_desenvolvimento_select_staff" on public.marcos_desenvolvimento;
 create policy "marcos_desenvolvimento_select_staff"
   on public.marcos_desenvolvimento for select to authenticated
   using (
@@ -148,6 +157,7 @@ create policy "marcos_desenvolvimento_select_staff"
     and crianca_id in (select public.auth_criancas_staff())
   );
 
+drop policy if exists "marcos_desenvolvimento_select_encarregado" on public.marcos_desenvolvimento;
 create policy "marcos_desenvolvimento_select_encarregado"
   on public.marcos_desenvolvimento for select to authenticated
   using (
@@ -155,6 +165,7 @@ create policy "marcos_desenvolvimento_select_encarregado"
     and crianca_id in (select public.auth_criancas_encarregado())
   );
 
+drop policy if exists "marcos_desenvolvimento_insert_admin" on public.marcos_desenvolvimento;
 create policy "marcos_desenvolvimento_insert_admin"
   on public.marcos_desenvolvimento for insert to authenticated
   with check (
@@ -164,6 +175,7 @@ create policy "marcos_desenvolvimento_insert_admin"
     and registado_por = (select auth.uid())
   );
 
+drop policy if exists "marcos_desenvolvimento_insert_staff" on public.marcos_desenvolvimento;
 create policy "marcos_desenvolvimento_insert_staff"
   on public.marcos_desenvolvimento for insert to authenticated
   with check (
@@ -173,6 +185,7 @@ create policy "marcos_desenvolvimento_insert_staff"
     and registado_por = (select auth.uid())
   );
 
+drop policy if exists "marcos_desenvolvimento_delete_admin" on public.marcos_desenvolvimento;
 create policy "marcos_desenvolvimento_delete_admin"
   on public.marcos_desenvolvimento for delete to authenticated
   using (
@@ -191,7 +204,7 @@ grant select, insert, delete on public.marcos_desenvolvimento to authenticated;
 -- não por turma como as fotos, porque um documento (ex. autorização
 -- assinada, ficha médica) é sempre específico de uma criança.
 
-create table public.documentos_crianca (
+create table if not exists public.documentos_crianca (
   id uuid primary key default gen_random_uuid(),
   escola_id uuid not null references public.escolas (id) on delete cascade,
   crianca_id uuid not null,
@@ -203,10 +216,11 @@ create table public.documentos_crianca (
     references public.criancas (id, escola_id) on delete cascade
 );
 
-create index documentos_crianca_crianca_id_idx on public.documentos_crianca (crianca_id);
+create index if not exists documentos_crianca_crianca_id_idx on public.documentos_crianca (crianca_id);
 
 alter table public.documentos_crianca enable row level security;
 
+drop policy if exists "documentos_crianca_select_admin" on public.documentos_crianca;
 create policy "documentos_crianca_select_admin"
   on public.documentos_crianca for select to authenticated
   using (
@@ -214,6 +228,7 @@ create policy "documentos_crianca_select_admin"
     and escola_id = public.auth_escola_id()
   );
 
+drop policy if exists "documentos_crianca_select_staff" on public.documentos_crianca;
 create policy "documentos_crianca_select_staff"
   on public.documentos_crianca for select to authenticated
   using (
@@ -221,6 +236,7 @@ create policy "documentos_crianca_select_staff"
     and crianca_id in (select public.auth_criancas_staff())
   );
 
+drop policy if exists "documentos_crianca_select_encarregado" on public.documentos_crianca;
 create policy "documentos_crianca_select_encarregado"
   on public.documentos_crianca for select to authenticated
   using (
@@ -228,6 +244,7 @@ create policy "documentos_crianca_select_encarregado"
     and crianca_id in (select public.auth_criancas_encarregado())
   );
 
+drop policy if exists "documentos_crianca_insert_admin" on public.documentos_crianca;
 create policy "documentos_crianca_insert_admin"
   on public.documentos_crianca for insert to authenticated
   with check (
@@ -238,6 +255,7 @@ create policy "documentos_crianca_insert_admin"
     and caminho = escola_id::text || '/' || crianca_id::text || '/' || split_part(caminho, '/', 3)
   );
 
+drop policy if exists "documentos_crianca_insert_staff" on public.documentos_crianca;
 create policy "documentos_crianca_insert_staff"
   on public.documentos_crianca for insert to authenticated
   with check (
@@ -248,6 +266,7 @@ create policy "documentos_crianca_insert_staff"
     and caminho = escola_id::text || '/' || crianca_id::text || '/' || split_part(caminho, '/', 3)
   );
 
+drop policy if exists "documentos_crianca_insert_encarregado" on public.documentos_crianca;
 create policy "documentos_crianca_insert_encarregado"
   on public.documentos_crianca for insert to authenticated
   with check (
@@ -258,6 +277,7 @@ create policy "documentos_crianca_insert_encarregado"
     and caminho = escola_id::text || '/' || crianca_id::text || '/' || split_part(caminho, '/', 3)
   );
 
+drop policy if exists "documentos_crianca_delete_admin" on public.documentos_crianca;
 create policy "documentos_crianca_delete_admin"
   on public.documentos_crianca for delete to authenticated
   using (
@@ -265,6 +285,7 @@ create policy "documentos_crianca_delete_admin"
     and escola_id = public.auth_escola_id()
   );
 
+drop policy if exists "documentos_crianca_delete_autor" on public.documentos_crianca;
 create policy "documentos_crianca_delete_autor"
   on public.documentos_crianca for delete to authenticated
   using (autor_id = (select auth.uid()));
@@ -278,6 +299,7 @@ insert into storage.buckets (id, name, public)
 values ('documentos-criancas', 'documentos-criancas', false)
 on conflict (id) do nothing;
 
+drop policy if exists "documentos_criancas_storage_select" on storage.objects;
 create policy "documentos_criancas_storage_select"
   on storage.objects for select to authenticated
   using (
@@ -296,6 +318,7 @@ create policy "documentos_criancas_storage_select"
     )
   );
 
+drop policy if exists "documentos_criancas_storage_insert" on storage.objects;
 create policy "documentos_criancas_storage_insert"
   on storage.objects for insert to authenticated
   with check (
@@ -317,6 +340,7 @@ create policy "documentos_criancas_storage_insert"
     )
   );
 
+drop policy if exists "documentos_criancas_storage_delete" on storage.objects;
 create policy "documentos_criancas_storage_delete"
   on storage.objects for delete to authenticated
   using (
