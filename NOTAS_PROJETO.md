@@ -301,6 +301,40 @@ Testado visualmente com Playwright contra a app a correr localmente
 (sem alterações a schema/RLS, por isso não foi preciso correr os
 testes adversariais outra vez).
 
+## Etapa 7b (2026-08-13) — segunda auditoria de segurança, pedida pelo utilizador
+
+O utilizador pediu duas revisões externas independentes (dois modelos
+de IA diferentes, com acesso ao código-fonte completo em .zip) antes
+de avançar mais para a Etapa 8. Detalhe completo em
+`AUDITORIA_SEGURANCA.md` (secção "Etapa 7b"); resumo aqui:
+
+- Cada achado foi verificado por leitura direta do código antes de
+  qualquer alteração — a maioria dos achados de uma das duas revisões
+  não correspondia ao código real (era genérica, não específica deste
+  projeto) e foi descartada sem alterar nada; os achados da outra
+  revisão foram confirmados um a um.
+- **Achado mais importante:** fotos eram visíveis a toda a família da
+  turma, não só à família da criança fotografada — contradizia
+  diretamente a promessa do `CONSENTIMENTO.md`. Corrigido com uma
+  tabela nova `foto_criancas` (liga cada foto às crianças que nela
+  aparecem) e `criancas.consentimento_fotos` (impede, na própria base
+  de dados, marcar uma criança sem autorização). Migrations `0024` e
+  `0025` (a RLS da tabela `fotos` e a do Storage precisaram de correção
+  separada).
+- Mais 6 achados confirmados e corrigidos: tabelas novas da Etapa 12b
+  sem nenhum teste adversarial (agora com 27 testes novos), mensagens
+  e uma função interna sem verificação explícita de escola (defesa em
+  profundidade), `foto_caminho` do avatar sem validação estrutural,
+  buckets de Storage sem limite de tamanho/tipo de ficheiro, scripts de
+  seed sem confirmação de ambiente antes de escrever/apagar dados.
+- **Bug real apanhado só pelos testes ao vivo** (não pela leitura de
+  código): a correção das fotos introduziu uma recursão infinita entre
+  as políticas de `fotos` e `foto_criancas` — o Postgres recusava a
+  operação. Corrigido na migration `0026` com uma função `security
+  definer`, a mesma técnica já usada no resto do projeto para isto.
+- `npm run test:rls`: **131/131 testes a passar** no final (eram 104
+  antes desta ronda).
+
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
 - 🔑 **Rodar a chave `service_role` do Supabase.** Foi colada nesta

@@ -72,3 +72,43 @@ Tal como todas as alterações à base de dados neste projeto, a correção foi
 feita através de uma migration SQL (`0018_auditoria_seguranca_correcoes.sql`)
 que o utilizador colou no editor SQL do Supabase, e os testes automáticos
 (`npm run test:rls`) foram corridos com sucesso depois de aplicada.
+
+## Etapa 7b — segunda ronda (2026-08-13)
+
+O utilizador pediu duas revisões externas independentes (dois modelos de
+IA diferentes) para auditar o projeto antes da Etapa 8, desta vez com
+acesso ao código-fonte completo (não só descrição). Cada achado foi
+verificado por leitura direta do código antes de qualquer alteração —
+a maioria dos achados de uma das revisões não correspondia ao código
+real e foi descartada; os achados da outra foram confirmados um a um.
+
+**O problema mais importante encontrado nesta ronda:** as fotos eram
+visíveis a toda a família da turma, não só à família da criança
+fotografada — contradizendo diretamente a promessa feita neste projeto
+em `CONSENTIMENTO.md` ("visíveis apenas aos encarregados de educação
+dessa criança"). Corrigido associando cada foto às crianças que nela
+aparecem (tabela nova `foto_criancas`) e adicionando um campo
+`consentimento_fotos` por criança que impede, na própria base de
+dados, marcar uma criança sem autorização.
+
+| # | Problema | Corrigido? |
+|---|---|---|
+| 1 | Fotos visíveis a toda a família da turma, não só à da criança fotografada — contradizia o CONSENTIMENTO.md. | ✅ Sim — `foto_criancas` + `consentimento_fotos`, RLS da tabela `fotos` e do Storage (0024, 0025). |
+| 2 | Tabelas novas da Etapa 12b/12c (autorizações de recolha, marcos de desenvolvimento, documentos, avatares) nunca tinham sido cobertas pelos testes adversariais automáticos. | ✅ Sim — 27 novos testes em `test-rls.mjs`. |
+| 3 | Leitura de mensagens não verificava explicitamente a escola (só quem era o participante). | ✅ Sim — defesa em profundidade acrescentada. |
+| 4 | Função interna `auth_staff_encarregado()` não verificava a escola, ao contrário das funções irmãs já corrigidas na Etapa 7. | ✅ Sim — alinhada com o mesmo padrão. |
+| 5 | `criancas.foto_caminho` (avatar) podia ser gravado pelo staff sem confirmar que apontava para a própria criança/escola. | ✅ Sim — validação estrutural, igual à já existente para fotos e documentos. |
+| 6 | Buckets de Storage aceitavam qualquer tipo/tamanho de ficheiro — `accept="image/*"` no browser não é proteção real. | ✅ Sim — limite de tamanho e tipos permitidos impostos no próprio bucket. |
+| 7 | Scripts de seed podiam, em teoria, ser corridos por engano contra o projeto errado. | ✅ Sim — pedem confirmação explícita do ambiente alvo. |
+
+Durante a correção do problema 1, os testes ao vivo (não só a leitura
+de código) apanharam um bug real introduzido pela própria correção:
+uma recursão infinita entre as políticas de `fotos` e `foto_criancas`
+(Postgres recusava a operação com o erro `infinite recursion detected
+in policy`). Corrigido com uma função `security definer` que quebra o
+ciclo — a mesma técnica já usada no resto do projeto para situações
+semelhantes — e ficou como teste de regressão permanente.
+
+Aplicado através de 3 migrations sucessivas (`0024`, `0025`, `0026`).
+`npm run test:rls` corrido com sucesso no final: **131/131 testes
+adversariais a passar**, incluindo os cenários novos.
