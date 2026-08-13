@@ -1,0 +1,33 @@
+{
+  "name": "Crianças Felizes",
+  "short_name": "Crianças Felizes",
+  "description": "Comunicação escola-família para creches e jardins de infância.",
+  "start_url": "/painel",
+  "id": "/painel",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f7fc",
+  "theme_color": "#3d7dfa",
+  "lang": "pt-PT",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

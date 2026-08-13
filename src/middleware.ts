@@ -8,8 +8,11 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Todas as rotas exceto ficheiros estáticos e imagens.
+     * Todas as rotas exceto ficheiros estáticos, imagens, e os
+     * ficheiros públicos da PWA (manifest.json, sw.js — têm de
+     * carregar sem autenticação, senão o browser não consegue
+     * instalar a app nem registar o service worker).
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
