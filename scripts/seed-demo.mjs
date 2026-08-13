@@ -146,6 +146,26 @@ async function main() {
     { escola_id: escola.id, turma_id: estrelinhas.id, nome: "Rodrigo Matos", data_nascimento: "2021-12-08" },
   ]);
 
+  console.log("A criar avatares (ilustrados, não fotos reais)…");
+  for (const [crianca, ficheiro] of [
+    [beatriz, "avatar-beatriz.png"],
+    [goncalo, "avatar-goncalo.png"],
+    [francisca, "avatar-francisca.png"],
+    [rodrigo, "avatar-rodrigo.png"],
+  ]) {
+    const imagem = readFileSync(new URL(`./assets/${ficheiro}`, import.meta.url));
+    const caminho = `${escola.id}/${crianca.id}/avatar.png`;
+    const { error: errUpload } = await db.storage
+      .from("avatares-criancas")
+      .upload(caminho, imagem, { contentType: "image/png", upsert: true });
+    if (errUpload) throw new Error(`Upload de avatar: ${errUpload.message}`);
+    const { error: errUpdate } = await db
+      .from("criancas")
+      .update({ foto_caminho: caminho })
+      .eq("id", crianca.id);
+    if (errUpdate) throw new Error(`Atualizar avatar: ${errUpdate.message}`);
+  }
+
   console.log("A ligar encarregados e staff…");
   await inserir("encarregados_criancas", [
     { encarregado_id: ids.encBeatriz, crianca_id: beatriz.id, parentesco: "Mãe" },
