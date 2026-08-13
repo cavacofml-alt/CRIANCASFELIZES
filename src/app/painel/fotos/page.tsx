@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
-import { formatarDataHoraPT } from "@/lib/data";
+import { formatarDataHoraPT, hojeISO, dataISOdeTimestamp } from "@/lib/data";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { PageFade, StaggerList, StaggerItem } from "../motion";
@@ -10,7 +11,20 @@ import { ApagarFotoBotao } from "./apagar-foto-botao";
 
 const UMA_HORA = 60 * 60;
 
-export default async function FotosPage() {
+function rotuloDia(dia: string, hoje: string, ontem: string) {
+  if (dia === hoje) return "Hoje";
+  if (dia === ontem) return "Ontem";
+  return new Date(`${dia}T12:00:00`).toLocaleDateString("pt-PT", {
+    day: "numeric",
+    month: "short",
+  });
+}
+
+export default async function FotosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dia?: string }>;
+}) {
   const supabase = await createClient();
 
   const {
@@ -59,6 +73,27 @@ export default async function FotosPage() {
 
   const podeEnviar = perfil.papel === "admin" || perfil.papel === "staff";
 
+  const hoje = hojeISO();
+  const ontem = new Date(`${hoje}T12:00:00`);
+  ontem.setDate(ontem.getDate() - 1);
+  const ontemISO = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(
+    ontem,
+  );
+
+  const diasComFotos = [
+    ...new Set((fotos ?? []).map((f) => dataISOdeTimestamp(f.criado_em))),
+  ].sort((a, b) => (a < b ? 1 : -1));
+
+  const { dia: diaEscolhidoParam } = await searchParams;
+  const diaSelecionado =
+    diaEscolhidoParam && diasComFotos.includes(diaEscolhidoParam)
+      ? diaEscolhidoParam
+      : (diasComFotos[0] ?? hoje);
+
+  const fotosDoDia = (fotos ?? []).filter(
+    (f) => dataISOdeTimestamp(f.criado_em) === diaSelecionado,
+  );
+
   return (
     <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
@@ -88,10 +123,28 @@ export default async function FotosPage() {
           />
         )}
 
-        {fotos && fotos.length > 0 ? (
+        {diasComFotos.length > 1 && (
+          <div className="flex gap-1 overflow-x-auto pb-1">
+            {diasComFotos.slice(0, 6).map((d) => (
+              <Link
+                key={d}
+                href={`/painel/fotos?dia=${d}`}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                  d === diaSelecionado
+                    ? "bg-brand-accent-soft text-brand-accent dark:bg-brand-accent-soft-dark"
+                    : "text-brand-muted hover:text-brand-ink dark:text-brand-muted-dark dark:hover:text-brand-ink-dark"
+                }`}
+              >
+                {rotuloDia(d, hoje, ontemISO)}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {fotosDoDia.length > 0 ? (
           <PageFade>
             <StaggerList className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {fotos.map((f) => {
+              {fotosDoDia.map((f) => {
                 const url = urlPorCaminho.get(f.caminho);
                 const podeApagar =
                   perfil.papel === "admin" || f.autor_id === perfil.id;

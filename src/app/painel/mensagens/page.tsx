@@ -5,6 +5,7 @@ import { contarNotificacoesPorTipo } from "@/lib/notificacoes";
 import { BotaoSair } from "../botao-sair";
 import { PainelNav } from "../nav";
 import { PageFade, StaggerList, StaggerItem } from "../motion";
+import { Avatar } from "../avatar";
 
 const ETIQUETA_PAPEL: Record<string, string> = {
   admin: "Administração",
@@ -104,6 +105,23 @@ export default async function MensagensPage() {
 
         <PageFade>
           <div className="flex flex-col gap-6">
+            {contactosPermitidos.length > 0 && (
+              <div className="flex gap-4 overflow-x-auto pb-1">
+                {contactosPermitidos.map((p) => (
+                  <Link
+                    key={p.id}
+                    href={`/painel/mensagens/${p.id}`}
+                    className="flex shrink-0 flex-col items-center gap-1"
+                  >
+                    <Avatar nome={p.nome} tamanho="md" />
+                    <span className="max-w-[4.5rem] truncate text-xs text-brand-muted dark:text-brand-muted-dark">
+                      {p.nome.split(" ")[0]}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            )}
+
             <section className="rounded-2xl border border-brand-border bg-brand-surface p-5 dark:border-brand-border-dark dark:bg-brand-surface-dark">
               <h2 className="mb-3 font-semibold text-brand-ink dark:text-brand-ink-dark">
                 Conversas

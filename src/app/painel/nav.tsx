@@ -28,6 +28,7 @@ const LIGACOES_ENCARREGADO: Ligacao[] = [
   { href: "/painel", rotulo: "Hoje", icone: "🏠" },
   { href: "/painel/fotos", rotulo: "Momentos", icone: "📸" },
   { href: "/painel/mensagens", rotulo: "Comunicação", icone: "💬", contagem: "comunicacao" },
+  { href: "/painel/desenvolvimento", rotulo: "Desenvolvimento", icone: "🌱" },
   { href: "/painel/perfil", rotulo: "Perfil", icone: "👤" },
 ];
 

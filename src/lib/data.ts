@@ -41,3 +41,13 @@ export function formatarDataExtensaPT(iso: string) {
 export function formatarDataHoraPT(iso: string) {
   return new Date(iso).toLocaleString("pt-PT", { timeZone: "Europe/Lisbon" });
 }
+
+/**
+ * Extrai a data (YYYY-MM-DD) de um timestamp, no fuso de Portugal —
+ * usado para agrupar registos por dia (ex.: fotos em "Momentos").
+ */
+export function dataISOdeTimestamp(iso: string) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(
+    new Date(iso),
+  );
+}
