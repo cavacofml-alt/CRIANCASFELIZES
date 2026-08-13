@@ -73,6 +73,13 @@ export default async function FotosPage({
 
   const podeEnviar = perfil.papel === "admin" || perfil.papel === "staff";
 
+  const { data: criancas } = podeEnviar
+    ? await supabase
+        .from("criancas")
+        .select("id, nome, turma_id, consentimento_fotos")
+        .order("nome")
+    : { data: [] };
+
   const hoje = hojeISO();
   const ontem = new Date(`${hoje}T12:00:00`);
   ontem.setDate(ontem.getDate() - 1);
@@ -120,6 +127,7 @@ export default async function FotosPage({
             escolaId={perfil.escola_id}
             perfilId={perfil.id}
             turmas={turmas ?? []}
+            criancas={criancas ?? []}
           />
         )}
 

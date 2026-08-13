@@ -327,19 +327,36 @@ async function main() {
       errRelatorioIns !== null,
     );
 
-    const { data: fotos } = await c.from("fotos").select("turma_id");
+    // Privacidade por criança (Etapa 7b): a turma Borboletas tem DUAS
+    // fotos — uma com a Matilde marcada, outra só com o Tomás. A mãe
+    // da Matilde só deve ver a que marca a sua própria educanda, mesmo
+    // sendo a mesma turma e a mesma equipa.
+    const { data: fotos } = await c.from("fotos").select("id, turma_id, caminho");
     verificar(
-      "vê a foto da turma da sua educanda",
-      fotos?.length === 1 && fotos[0].turma_id === ids.turmas.borboletas,
-      `viu ${fotos?.length ?? 0}`,
+      "vê só a foto onde a sua educanda está marcada (não a do colega de turma)",
+      fotos?.length === 1 &&
+        fotos[0].turma_id === ids.turmas.borboletas &&
+        fotos[0].id === ids.fotos.matilde,
+      `viu ${fotos?.length ?? 0}: ${fotos?.map((f) => f.caminho).join(", ")}`,
     );
 
     const { data: baixarFoto, error: errBaixarFoto } = await c.storage
       .from("fotos-turmas")
       .createSignedUrl(`${ids.escolas.arcoIris}/${ids.turmas.borboletas}/exemplo.png`, 60);
     verificar(
-      "consegue gerar link para a foto da turma da sua educanda",
+      "consegue gerar link para a foto onde a sua educanda está marcada",
       errBaixarFoto === null && !!baixarFoto?.signedUrl,
+    );
+
+    const { error: errFotoColegaTurma } = await c.storage
+      .from("fotos-turmas")
+      .createSignedUrl(
+        `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/exemplo-tomas.png`,
+        60,
+      );
+    verificar(
+      "NÃO consegue gerar link para a foto do colega de turma (não marcada)",
+      errFotoColegaTurma !== null,
     );
 
     const { error: errFotoOutraTurma } = await c.storage
@@ -354,11 +371,20 @@ async function main() {
       .from("fotos-turmas")
       .upload(
         `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/intrusa.png`,
-        new Blob(["x"]),
+        new Blob(["x"], { type: "image/png" }),
       );
     verificar(
       "NÃO consegue fazer upload de fotos (só staff/admin)",
       errUploadEnc !== null,
+    );
+
+    const { error: errMarcarSemVer } = await c.from("foto_criancas").insert({
+      foto_id: ids.fotos.tomas,
+      crianca_id: ids.criancas.matilde,
+    });
+    verificar(
+      "NÃO consegue marcar a sua educanda numa foto que não pode ver/gerir",
+      errMarcarSemVer !== null,
     );
   }
 
@@ -574,7 +600,7 @@ async function main() {
     const caminhoFotoTeste = `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/teste-${Date.now()}.png`;
     const { error: errUploadAna } = await c.storage
       .from("fotos-turmas")
-      .upload(caminhoFotoTeste, new Blob(["x"]));
+      .upload(caminhoFotoTeste, new Blob(["x"], { type: "image/png" }));
     verificar("consegue fazer upload de foto para a sua turma", errUploadAna === null);
     if (!errUploadAna) {
       await c.storage.from("fotos-turmas").remove([caminhoFotoTeste]);
@@ -584,11 +610,39 @@ async function main() {
       .from("fotos-turmas")
       .upload(
         `${ids.escolas.arcoIris}/${ids.turmas.girassois}/intrusa-${Date.now()}.png`,
-        new Blob(["x"]),
+        new Blob(["x"], { type: "image/png" }),
       );
     verificar(
       "NÃO consegue fazer upload de foto para a turma do colega",
       errUploadOutraTurma !== null,
+    );
+
+    // Achado da revisão externa (Etapa 7b): o bucket agora impõe
+    // tipo/tamanho de ficheiro — `accept="image/*"` no browser não é
+    // segurança nenhuma, tem de ser o próprio bucket a recusar.
+    const { error: errUploadPDF } = await c.storage
+      .from("fotos-turmas")
+      .upload(
+        `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/nao-e-foto-${Date.now()}.pdf`,
+        new Blob(["%PDF-1.4 não é uma imagem"], { type: "application/pdf" }),
+      );
+    verificar(
+      "NÃO consegue enviar um ficheiro que não seja imagem para o bucket de fotos",
+      errUploadPDF !== null,
+    );
+
+    const ficheiroGigante = new Blob([new Uint8Array(6 * 1024 * 1024)], {
+      type: "image/png",
+    });
+    const { error: errUploadGigante } = await c.storage
+      .from("fotos-turmas")
+      .upload(
+        `${ids.escolas.arcoIris}/${ids.turmas.borboletas}/gigante-${Date.now()}.png`,
+        ficheiroGigante,
+      );
+    verificar(
+      "NÃO consegue enviar uma foto acima do limite de tamanho do bucket",
+      errUploadGigante !== null,
     );
   }
 
@@ -836,7 +890,11 @@ async function main() {
     );
 
     const { data: fotosAdmin } = await c.from("fotos").select("id");
-    verificar("vê a foto da escola", fotosAdmin?.length === 1);
+    verificar(
+      "vê as 2 fotos da escola (admin vê tudo, não só as marcadas)",
+      fotosAdmin?.length === 2,
+      `viu ${fotosAdmin?.length ?? 0}`,
+    );
 
     const { data: linkAdmin, error: errLinkAdmin } = await c.storage
       .from("fotos-turmas")

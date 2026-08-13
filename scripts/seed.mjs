@@ -10,6 +10,7 @@
  * que uma escola nunca consegue ver os dados da outra.
  */
 import { createClient } from "@supabase/supabase-js";
+import { confirmarAmbiente } from "./confirmar-seed.mjs";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -19,6 +20,10 @@ if (!url || !serviceKey) {
     "Faltam NEXT_PUBLIC_SUPABASE_URL e/ou SUPABASE_SERVICE_ROLE_KEY.",
   );
   process.exit(1);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  await confirmarAmbiente(url);
 }
 
 const db = createClient(url, serviceKey, {
@@ -341,7 +346,7 @@ async function main() {
     .from("fotos-turmas")
     .upload(caminhoFoto, pngExemplo, { contentType: "image/png", upsert: true });
   if (errUpload) throw new Error(`Upload de foto de exemplo: ${errUpload.message}`);
-  await inserir("fotos", [
+  const [fotoMatilde] = await inserir("fotos", [
     {
       escola_id: arcoIris.id,
       turma_id: borboletas.id,
@@ -349,6 +354,30 @@ async function main() {
       legenda: "Foto de exemplo (fictícia).",
       autor_id: ids.staffBorboletas,
     },
+  ]);
+  // Marca só a Matilde nesta foto — testa a privacidade por criança
+  // (Etapa 7b): a família do Tomás, mesmo sendo da mesma turma, não a
+  // deve ver.
+  await inserir("foto_criancas", [
+    { foto_id: fotoMatilde.id, crianca_id: matilde.id },
+  ]);
+
+  const caminhoFotoTomas = `${arcoIris.id}/${borboletas.id}/exemplo-tomas.png`;
+  const { error: errUploadTomas } = await db.storage
+    .from("fotos-turmas")
+    .upload(caminhoFotoTomas, pngExemplo, { contentType: "image/png", upsert: true });
+  if (errUploadTomas) throw new Error(`Upload de foto do Tomás: ${errUploadTomas.message}`);
+  const [fotoTomas] = await inserir("fotos", [
+    {
+      escola_id: arcoIris.id,
+      turma_id: borboletas.id,
+      caminho: caminhoFotoTomas,
+      legenda: "Foto de exemplo do Tomás (fictícia).",
+      autor_id: ids.staffBorboletas,
+    },
+  ]);
+  await inserir("foto_criancas", [
+    { foto_id: fotoTomas.id, crianca_id: tomas.id },
   ]);
 
   console.log("\n✓ Dados fictícios criados.\n");
@@ -383,6 +412,10 @@ async function main() {
     mensagens: {
       encPergunta: mensagemEnc.id,
       staffResposta: mensagemStaff.id,
+    },
+    fotos: {
+      matilde: fotoMatilde.id,
+      tomas: fotoTomas.id,
     },
   };
   const { writeFileSync } = await import("node:fs");
