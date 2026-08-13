@@ -148,28 +148,43 @@ validada na escola piloto, Etapa 8).
    "Etapa 11" abaixo), a pedido do utilizador. Fica na fila, depois da
    Etapa 8 (dados reais do piloto).
 
-## Etapa 11 (proposta, fora das 10 etapas originais do CLAUDE.md) — Aplicação móvel
+## Etapa 11 (implementada, fora das 10 etapas originais do CLAUDE.md) — Aplicação móvel
 
-Pedido pelo utilizador em 2026-08-12. Regista-se aqui, não no CLAUDE.md
-(esse ficheiro é a especificação original, mantida à parte). Só avança
-depois de a Etapa 8 estar concluída — combinado com o utilizador.
+Pedido pelo utilizador em 2026-08-12, registado aqui (não no CLAUDE.md,
+que é a especificação original). Duas opções muito diferentes em
+esforço/custo foram apresentadas:
 
-Duas opções muito diferentes em esforço e custo, a decidir quando
-chegar a altura:
-
-- **PWA (recomendado para começar)** — a app web atual, instalável no
-  ecrã principal do telemóvel, ecrã inteiro, alguma funcionalidade
-  offline. Sem custos, sem lojas de aplicações, reaproveita todo o
-  código já feito.
+- **PWA** — a app web atual, instalável no ecrã principal do
+  telemóvel, ecrã inteiro. Sem custos, sem lojas de aplicações,
+  reaproveita todo o código já feito.
 - **App nativa (React Native/Expo)** — publicada na App Store e Google
-  Play. Recriação dos ecrãs numa tecnologia diferente, mais trabalho.
-  Custos reais que o utilizador tem de autorizar e pagar diretamente:
-  conta Apple Developer (~99 USD/ano) e Google Play (~25 USD,
-  pagamento único).
+  Play. Recriação dos ecrãs, mais trabalho, custos reais a autorizar
+  diretamente pelo utilizador (conta Apple Developer ~99 USD/ano,
+  Google Play ~25 USD pagamento único).
 
-Notificações push (item 2 do backlog acima) ficam mais fáceis de
-resolver bem numa app nativa do que numa PWA, sobretudo no iPhone —
-outro fator a pesar na escolha, quando chegar a altura.
+**Atualização (2026-08-13) — PWA implementada.** `public/manifest.json`
+(nome, ícones, `display: standalone`, cor da marca), ícones gerados a
+partir da paleta já existente (`public/icon-*.png`,
+`apple-touch-icon.png`, `favicon.png`), e um service worker mínimo
+(`public/sw.js`) — deliberadamente **sem cache agressivo**: dados como
+presenças e mensagens têm de estar sempre atualizados, nunca servidos
+de uma cópia antiga só para a app "parecer mais rápida". Foi preciso
+também abrir uma exceção no middleware (`src/middleware.ts`) para o
+`manifest.json` e o `sw.js` carregarem sem passar pela autenticação —
+confirmado por teste que `/painel` continua protegido normalmente.
+
+Testado ao vivo com Playwright em viewport de telemóvel (390×844): o
+`<link rel="manifest">` está presente, o service worker regista-se
+com sucesso, a cor do tema aplica-se, e o layout responsivo já
+existente continua a funcionar bem neste tamanho de ecrã.
+
+App nativa (React Native/Expo) continua registada como opção futura,
+não decidida — os custos (Apple Developer, Google Play) exigem
+autorização explícita do utilizador quando/se chegar a altura.
+
+Notificações push ficam mais fáceis de resolver bem numa app nativa do
+que numa PWA, sobretudo no iPhone — por avaliar mais tarde, se vier a
+ser um requisito importante do piloto.
 
 ## Etapa 12 (implementada, fora das 10 etapas originais) — Reformulação UX
 
