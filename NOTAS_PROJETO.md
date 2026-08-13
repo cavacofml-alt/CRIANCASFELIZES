@@ -212,11 +212,35 @@ de fralda confirmados a gravar corretamente. Não houve alterações a
 RLS nem a schema — os 104 testes adversariais de segurança continuam
 todos a passar.
 
-**Por fazer, deliberadamente adiado** (ver tarefa registada): schema de
-"Desenvolvimento" (marcos de evolução da criança) e o resto do Perfil
-(alergias, autorizações, documentos) — precisam de migration nova e do
-mesmo cuidado de RLS que todo o resto do projeto trata como código
-crítico. Não avançar sem confirmar com o utilizador primeiro.
+**Atualização (2026-08-13) — concluído.** O utilizador autorizou
+explicitamente avançar com o schema sensível. Migration
+`0020_perfil_avancado_schema.sql` aplicada (idempotente — pode ser
+corrida mais do que uma vez em segurança, `DROP POLICY IF EXISTS` /
+`IF NOT EXISTS` em tudo):
+
+- `criancas` ganhou `alergias`/`notas_saude` — editável só por admin
+  (reaproveita a RLS já existente, sem política nova).
+- `autorizacoes_recolha` (nova) — lista de pessoas autorizadas a
+  levantar a criança, mesmo sem conta na app; geríveis pelo próprio
+  encarregado de educação ou pelo admin.
+- `marcos_desenvolvimento` (nova) — histórico por categoria (motor,
+  linguagem, social, cognitivo, autonomia), escrito por staff/admin,
+  lido também pela família.
+- `documentos_crianca` (nova) + bucket de Storage privado
+  `documentos-criancas` (caminho por criança, não por turma — mais
+  sensível que fotos). Caminhos validados com `uuid_seguro()`, a
+  mesma função criada na auditoria de segurança (0018), para não
+  repetir o problema de caminhos mal formados.
+
+UI: `/painel/perfil` (autorização + documento têm formulário próprio
+para o encarregado; alergias/saúde/marcos são só de leitura) e
+`/painel/registar` ganhou a 6ª ação "Desenvolvimento".
+
+Testado a sério contra a base de dados (não só visualmente): criada
+uma autorização de recolha, um marco de desenvolvimento (pela conta da
+educadora) e enviado um documento — todos confirmados a aparecer
+corretamente do lado da família. 104/104 testes adversariais de
+segurança continuam a passar depois da migration.
 
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
