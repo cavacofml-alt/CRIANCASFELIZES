@@ -296,9 +296,9 @@ async function main() {
   // Imagens ilustrativas simples (não fotografias a sério, mas visíveis
   // — ao contrário de um pixel transparente, que aparece como imagem
   // partida na aplicação e fica mal numa demonstração).
-  for (const [turma, autorId, legenda, ficheiro] of [
-    [passarinhos, ids.staffPassarinhos, "Manhã de brincadeiras na turma Passarinhos.", "demo-passarinhos.png"],
-    [estrelinhas, ids.staffEstrelinhas, "Atividade de pintura na turma Estrelinhas.", "demo-estrelinhas.png"],
+  for (const [turma, autorId, legenda, ficheiro, criancasNaFoto] of [
+    [passarinhos, ids.staffPassarinhos, "Manhã de brincadeiras na turma Passarinhos.", "demo-passarinhos.png", [beatriz, goncalo]],
+    [estrelinhas, ids.staffEstrelinhas, "Atividade de pintura na turma Estrelinhas.", "demo-estrelinhas.png", [francisca, rodrigo]],
   ]) {
     const imagem = readFileSync(new URL(`./assets/${ficheiro}`, import.meta.url));
     const caminho = `${escola.id}/${turma.id}/exemplo-${Date.now()}.png`;
@@ -306,10 +306,63 @@ async function main() {
       .from("fotos-turmas")
       .upload(caminho, imagem, { contentType: "image/png", upsert: true });
     if (errUpload) throw new Error(`Upload de foto: ${errUpload.message}`);
-    await inserir("fotos", [
+    const [foto] = await inserir("fotos", [
       { escola_id: escola.id, turma_id: turma.id, caminho, legenda, autor_id: autorId },
     ]);
+    // Privacidade por criança (Etapa 7b): sem isto marcado, nenhuma
+    // família veria a foto, mesmo sendo da turma certa.
+    await inserir(
+      "foto_criancas",
+      criancasNaFoto.map((c) => ({ foto_id: foto.id, crianca_id: c.id })),
+    );
   }
+
+  console.log("A criar marcos de desenvolvimento e autorizações de recolha…");
+  await inserir("marcos_desenvolvimento", [
+    {
+      escola_id: escola.id,
+      crianca_id: beatriz.id,
+      categoria: "motor",
+      titulo: "Já sobe e desce escadas sozinha",
+      descricao: "Com apoio no corrimão, mas já não pede ajuda.",
+      data: "2026-08-05",
+      registado_por: ids.staffPassarinhos,
+    },
+    {
+      escola_id: escola.id,
+      crianca_id: beatriz.id,
+      categoria: "linguagem",
+      titulo: "Começou a juntar duas palavras",
+      descricao: "\"Mais água\", \"quero colo\" — frases curtas cada vez mais frequentes.",
+      data: "2026-07-22",
+      registado_por: ids.staffPassarinhos,
+    },
+    {
+      escola_id: escola.id,
+      crianca_id: goncalo.id,
+      categoria: "social",
+      titulo: "Começou a partilhar brinquedos sem ser pedido",
+      data: "2026-08-01",
+      registado_por: ids.staffPassarinhos,
+    },
+  ]);
+  await inserir("autorizacoes_recolha", [
+    {
+      escola_id: escola.id,
+      crianca_id: beatriz.id,
+      nome: "Manuel Lopes",
+      parentesco: "Avô",
+      telefone: "912 345 678",
+      criado_por: ids.encBeatriz,
+    },
+    {
+      escola_id: escola.id,
+      crianca_id: beatriz.id,
+      nome: "Ana Cristina Silva",
+      parentesco: "Tia",
+      criado_por: ids.encBeatriz,
+    },
+  ]);
 
   console.log("\n✓ Escola de demonstração criada.\n");
   console.log(`Palavra-passe de todas as contas: ${PALAVRA_PASSE_DEMO}\n`);
