@@ -279,6 +279,28 @@ de família e de educadora. 104/104 testes adversariais de segurança
 continuam a passar depois da migration e depois destes testes de
 escrita ao vivo.
 
+**Atualização (2026-08-13) — mais 4 melhorias visuais aproximadas ao
+mockup**, todas sem inventar nenhum dado (só reorganização de
+informação que já existia):
+
+- Navegação da família ganhou um 5º item, **Desenvolvimento**, com
+  página própria (`/painel/desenvolvimento`) — os marcos de
+  desenvolvimento saíram do Perfil e passaram a ter o seu próprio
+  espaço, tal como no mockup. (As barras de percentagem que o mockup
+  mostra continuam de fora — não temos essa métrica calculada.)
+- `/painel/perfil` passou de secções empilhadas para separadores
+  (Informações / Saúde / Responsáveis / Documentos) — componente novo
+  `tabs-crianca.tsx`.
+- `/painel/fotos` (Momentos) ganhou filtro por dia (Hoje/Ontem/data),
+  agrupando as fotos que já existiam.
+- `/painel/mensagens` (Comunicação) ganhou uma fila de avatares dos
+  contactos no topo, reaproveitando o componente `Avatar` (iniciais
+  coloridas, já que a equipa não tem fotos de perfil, só as crianças).
+
+Testado visualmente com Playwright contra a app a correr localmente
+(sem alterações a schema/RLS, por isso não foi preciso correr os
+testes adversariais outra vez).
+
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
 - 🔑 **Rodar a chave `service_role` do Supabase.** Foi colada nesta
