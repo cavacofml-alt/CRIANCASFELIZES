@@ -242,6 +242,43 @@ educadora) e enviado um documento — todos confirmados a aparecer
 corretamente do lado da família. 104/104 testes adversariais de
 segurança continuam a passar depois da migration.
 
+**Atualização (2026-08-13) — foto de perfil da criança.** O
+utilizador partilhou um mockup visual mais polido e perguntou se a
+app "não é igual" por ser mobile — esclarecido que é uma diferença de
+acabamento visual, não de plataforma (a app já funciona bem em
+telemóvel, é uma PWA responsiva). Depois de aprovar explicitamente
+("Sim, quero chegar a este nível"), foi acrescentada a funcionalidade
+que realmente faltava: foto/avatar da criança. Ficou deliberadamente
+fora deste trabalho tudo o que implicaria inventar dados (percentagens
+de progresso de desenvolvimento, valores de dashboard financeiro).
+
+Migration `0023_foto_perfil_crianca.sql` aplicada:
+
+- `criancas` ganhou a coluna `foto_caminho`. O staff só pode alterar
+  essa coluna (GRANT ao nível da coluna, não da linha toda) — não pode
+  editar nome/alergias/etc. mesmo tendo permissão de UPDATE na tabela.
+- Bucket de Storage privado `avatares-criancas`, caminho
+  `<escola_id>/<crianca_id>/avatar.<ext>`, validado com `uuid_seguro()`.
+  Admin tem acesso total; staff só às crianças da sua turma; família
+  só pode ver a foto do seu próprio educando (sem poder alterar).
+
+UI: `Avatar` (componente novo, círculo com foto ou iniciais coloridas
+se não houver foto) aparece agora em `/painel` (Hoje), `/painel/perfil`,
+`/painel/registar` (lista da turma) e `/painel/presencas`. Educador
+pode carregar/substituir a foto a partir da ficha da criança em
+`/painel/registar/[id]`.
+
+As fotos de demonstração (`scripts/seed-demo.mjs`) são desenhos simples
+gerados por computador, não fotografias — propositadamente, para não
+fabricar imagens com aparência de fotos reais de crianças que não
+existem.
+
+Testado a sério contra a base de dados a sério (não só visualmente),
+com Playwright: avatar visível corretamente nas 4 páginas, para conta
+de família e de educadora. 104/104 testes adversariais de segurança
+continuam a passar depois da migration e depois destes testes de
+escrita ao vivo.
+
 ## Dívida técnica / lembretes de segurança (ver também CLAUDE.md)
 
 - 🔑 **Rodar a chave `service_role` do Supabase.** Foi colada nesta
