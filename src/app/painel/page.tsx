@@ -192,6 +192,16 @@ export default async function PainelPage() {
           {cabecalho}
           {nav}
 
+          <Link
+            href="/painel/entrada-saida"
+            className="flex items-center justify-between gap-3 rounded-2xl border border-brand-accent-soft bg-brand-accent-soft px-5 py-3 text-brand-accent transition-colors hover:bg-brand-accent hover:text-white dark:border-brand-accent-soft-dark dark:bg-brand-accent-soft-dark"
+          >
+            <span className="text-sm font-medium">
+              🚪 Registar entrada ou saída agora
+            </span>
+            <span>→</span>
+          </Link>
+
           <PageFade>
             <StaggerList className="flex flex-col gap-5">
               {criancas && criancas.length > 0 ? (
@@ -447,6 +457,12 @@ export default async function PainelPage() {
                 className="rounded-full border border-brand-border px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-accent-soft dark:border-brand-border-dark dark:text-brand-ink-dark dark:hover:bg-brand-accent-soft-dark"
               >
                 Publicar aviso
+              </Link>
+              <Link
+                href="/painel/codigo-entrada"
+                className="rounded-full border border-brand-border px-4 py-2 text-sm font-medium text-brand-ink transition-colors hover:bg-brand-accent-soft dark:border-brand-border-dark dark:text-brand-ink-dark dark:hover:bg-brand-accent-soft-dark"
+              >
+                Código QR de entrada
               </Link>
             </StaggerItem>
           </StaggerList>

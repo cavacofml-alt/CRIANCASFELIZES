@@ -32,6 +32,12 @@ const limpeza = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
+function hojeLisboa() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Lisbon" }).format(
+    new Date(),
+  );
+}
+
 let passou = 0;
 let falhou = 0;
 
@@ -291,7 +297,11 @@ async function main() {
       `viu ${presencas?.length ?? 0}`,
     );
 
-    const { error: errPresencaIns } = await c.from("presencas").insert({
+    // Etapa 13 (check-in por QR): o encarregado passou a poder
+    // registar a entrada/saída do seu próprio educando, mas só para o
+    // dia de hoje — nunca para outro dia (correção retroativa continua
+    // reservada ao admin).
+    const { error: errPresencaOutroDia } = await c.from("presencas").insert({
       escola_id: ids.escolas.arcoIris,
       crianca_id: ids.criancas.matilde,
       data: "2026-08-11",
@@ -299,9 +309,54 @@ async function main() {
       registado_entrada_por: ids.perfis.encMatilde,
     });
     verificar(
-      "NÃO consegue registar entrada (só staff/admin)",
-      errPresencaIns !== null,
+      "NÃO consegue registar entrada da sua educanda para um dia que não seja hoje",
+      errPresencaOutroDia !== null,
     );
+
+    const { error: errPresencaOutraCrianca } = await c.from("presencas").insert({
+      escola_id: ids.escolas.arcoIris,
+      crianca_id: ids.criancas.leonor,
+      data: hojeLisboa(),
+      hora_entrada: new Date().toISOString(),
+      registado_entrada_por: ids.perfis.encMatilde,
+    });
+    verificar(
+      "NÃO consegue registar entrada de uma criança que não é sua",
+      errPresencaOutraCrianca !== null,
+    );
+
+    const { data: presencaHojeIns, error: errPresencaHoje } = await c
+      .from("presencas")
+      .insert({
+        escola_id: ids.escolas.arcoIris,
+        crianca_id: ids.criancas.matilde,
+        data: hojeLisboa(),
+        hora_entrada: new Date().toISOString(),
+        registado_entrada_por: ids.perfis.encMatilde,
+      })
+      .select("id")
+      .single();
+    verificar(
+      "consegue registar a entrada da sua educanda, hoje (QR à entrada)",
+      errPresencaHoje === null,
+    );
+
+    if (presencaHojeIns) {
+      const { error: errSaidaPropria } = await c
+        .from("presencas")
+        .update({
+          hora_saida: new Date().toISOString(),
+          levantado_por_nome: "Carla Ferreira",
+          registado_saida_por: ids.perfis.encMatilde,
+        })
+        .eq("id", presencaHojeIns.id);
+      verificar(
+        "consegue registar a saída da sua educanda, hoje",
+        errSaidaPropria === null,
+      );
+
+      await limpeza.from("presencas").delete().eq("id", presencaHojeIns.id);
+    }
 
     // Relatórios diários e fotos (Etapa 5): só consulta, nunca escreve.
     const { data: relatorios } = await c
