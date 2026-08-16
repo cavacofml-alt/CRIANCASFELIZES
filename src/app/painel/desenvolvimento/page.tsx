@@ -32,29 +32,27 @@ export default async function DesenvolvimentoPage() {
   if (!perfil) redirect("/painel");
   if (perfil.papel !== "encarregado") redirect("/painel");
 
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
-
-  const { data: criancas } = await supabase
-    .from("criancas")
-    .select("id, nome, foto_caminho")
-    .order("nome");
+  const [notificacoes, { data: criancas }] = await Promise.all([
+    contarNotificacoesPorTipo(),
+    supabase.from("criancas").select("id, nome, foto_caminho").order("nome"),
+  ]);
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
 
   const criancaIds = (criancas ?? []).map((c) => c.id);
 
-  const avatares = await assinarAvatares(
-    supabase,
-    (criancas ?? []).map((c) => c.foto_caminho),
-  );
-
-  const { data: marcos } =
+  const [avatares, { data: marcos }] = await Promise.all([
+    assinarAvatares(
+      supabase,
+      (criancas ?? []).map((c) => c.foto_caminho),
+    ),
     criancaIds.length > 0
-      ? await supabase
+      ? supabase
           .from("marcos_desenvolvimento")
           .select("id, crianca_id, categoria, titulo, descricao, data")
           .in("crianca_id", criancaIds)
           .order("data", { ascending: false })
-      : { data: [] };
+      : Promise.resolve({ data: [] }),
+  ]);
 
   return (
     <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">

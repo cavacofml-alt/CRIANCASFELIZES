@@ -24,24 +24,25 @@ export default async function MuralPage() {
   if (!perfil) redirect("/painel");
 
   // Todas as consultas abaixo passam pelo RLS: um aviso só aparece se a
-  // política de `avisos` autorizar este utilizador a vê-lo.
-  const { data: turmas } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .order("nome");
-
-  const { data: avisos } = await supabase
-    .from("avisos")
-    .select("id, titulo, corpo, turma_id, autor_id, criado_em")
-    .order("criado_em", { ascending: false });
-
-  const { data: autores } = await supabase.from("perfis").select("id, nome");
+  // política de `avisos` autorizar este utilizador a vê-lo. Nenhuma
+  // depende das outras, por isso correm em paralelo.
+  const [{ data: turmas }, { data: avisos }, { data: autores }] =
+    await Promise.all([
+      supabase.from("turmas").select("id, nome").order("nome"),
+      supabase
+        .from("avisos")
+        .select("id, titulo, corpo, turma_id, autor_id, criado_em")
+        .order("criado_em", { ascending: false }),
+      supabase.from("perfis").select("id, nome"),
+    ]);
 
   const nomeAutor = new Map((autores ?? []).map((a) => [a.id, a.nome]));
   const nomeTurma = new Map((turmas ?? []).map((t) => [t.id, t.nome]));
   const indiceTurma = indicePorTurma(turmas ?? []);
 
-  // Visitar o mural é o que "lê" as notificações de avisos.
+  // Visitar o mural é o que "lê" as notificações de avisos — tem de
+  // acontecer antes de contar as notificações por ler, logo abaixo
+  // (não pode ser paralelizado com isso, só com as consultas acima).
   await supabase.rpc("marcar_notificacoes_tipo_lidas", { tipo_param: "aviso" });
 
   const { avisos: contagemAvisos, mensagens: contagemMensagens } =

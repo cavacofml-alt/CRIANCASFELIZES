@@ -28,14 +28,28 @@ export default async function MensagensPage() {
     .maybeSingle();
   if (!perfil) redirect("/painel");
 
-  // RLS já limita quem aparece aqui: para um encarregado, só staff das
-  // turmas dos seus educandos e a administração; para staff, a sua
-  // equipa e os encarregados das suas turmas; para admin, toda a escola.
-  const { data: perfisVisiveis } = await supabase
-    .from("perfis")
-    .select("id, nome, papel")
-    .neq("id", perfil.id)
-    .order("nome");
+  // Estas três consultas não dependem umas das outras — só de `perfil`,
+  // já disponível — por isso correm em paralelo, não em sequência
+  // (a página estava visivelmente lenta a carregar com 3 pedidos
+  // sucessivos ao Supabase).
+  const [{ data: perfisVisiveis }, { data: mensagens }, notificacoes] =
+    await Promise.all([
+      // RLS já limita quem aparece aqui: para um encarregado, só staff
+      // das turmas dos seus educandos e a administração; para staff, a
+      // sua equipa e os encarregados das suas turmas; para admin, toda
+      // a escola.
+      supabase
+        .from("perfis")
+        .select("id, nome, papel")
+        .neq("id", perfil.id)
+        .order("nome"),
+      supabase
+        .from("mensagens")
+        .select("remetente_id, destinatario_id, corpo, lida_em, criado_em")
+        .order("criado_em", { ascending: false }),
+      contarNotificacoesPorTipo(),
+    ]);
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
 
   // Staff vê colegas (para efeitos do mural/equipa), mas as políticas de
   // `mensagens` só permitem contactar encarregados das suas turmas e a
@@ -43,11 +57,6 @@ export default async function MensagensPage() {
   const contactosPermitidos = (perfisVisiveis ?? []).filter((p) =>
     perfil.papel === "staff" ? p.papel === "admin" || p.papel === "encarregado" : true,
   );
-
-  const { data: mensagens } = await supabase
-    .from("mensagens")
-    .select("remetente_id, destinatario_id, corpo, lida_em, criado_em")
-    .order("criado_em", { ascending: false });
 
   const nomePorId = new Map(
     (perfisVisiveis ?? []).map((p) => [p.id, p.nome] as const),
@@ -79,9 +88,6 @@ export default async function MensagensPage() {
     (p) => !conversas.has(p.id),
   );
 
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
-
   return (
     <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">
       <div className="mx-auto flex max-w-3xl flex-col gap-8">
@@ -93,6 +99,22 @@ export default async function MensagensPage() {
             <p className="mt-1 text-brand-muted dark:text-brand-muted-dark">
               {perfil.nome}
             </p>
+            {perfil.papel === "encarregado" && (contagemAvisos > 0 || contagemMensagens > 0) && (
+              <p className="mt-1 text-xs text-brand-muted dark:text-brand-muted-dark">
+                O número junto a &ldquo;Comunicação&rdquo; conta os dois:{" "}
+                {contagemAvisos > 0 && (
+                  <>
+                    <Link href="/painel/mural" className="text-brand-accent hover:underline">
+                      {contagemAvisos} aviso{contagemAvisos > 1 ? "s" : ""} novo{contagemAvisos > 1 ? "s" : ""} no mural
+                    </Link>
+                    {contagemMensagens > 0 && " e "}
+                  </>
+                )}
+                {contagemMensagens > 0 &&
+                  `${contagemMensagens} mensagem${contagemMensagens > 1 ? "s" : ""} nova${contagemMensagens > 1 ? "s" : ""}`}
+                .
+              </p>
+            )}
           </div>
           <BotaoSair />
         </header>

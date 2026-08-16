@@ -32,54 +32,56 @@ export default async function PerfilPage() {
   // crianças continua a fazer-se por fora da app, por agora.
   if (perfil.papel !== "encarregado") redirect("/painel");
 
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
-
-  const { data: criancas } = await supabase
-    .from("criancas")
-    .select("id, nome, data_nascimento, turma_id, alergias, notas_saude, foto_caminho")
-    .order("nome");
-
-  const criancaIds = (criancas ?? []).map((c) => c.id);
-
-  const avatares = await assinarAvatares(
-    supabase,
-    (criancas ?? []).map((c) => c.foto_caminho),
-  );
-
-  const { data: turmas } = await supabase.from("turmas").select("id, nome");
+  // Grupo 1: nenhuma destas consultas depende das outras.
+  const [
+    notificacoes,
+    { data: criancas },
+    { data: turmas },
+    { data: ligacoes },
+    { data: perfisEncarregados },
+  ] = await Promise.all([
+    contarNotificacoesPorTipo(),
+    supabase
+      .from("criancas")
+      .select("id, nome, data_nascimento, turma_id, alergias, notas_saude, foto_caminho")
+      .order("nome"),
+    supabase.from("turmas").select("id, nome"),
+    supabase
+      .from("encarregados_criancas")
+      .select("crianca_id, encarregado_id, parentesco"),
+    supabase.from("perfis").select("id, nome").eq("papel", "encarregado"),
+  ]);
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
   const nomeTurma = new Map((turmas ?? []).map((t) => [t.id, t.nome]));
   const indiceTurma = indicePorTurma(turmas ?? []);
-
-  const { data: ligacoes } = await supabase
-    .from("encarregados_criancas")
-    .select("crianca_id, encarregado_id, parentesco");
-
-  const { data: perfisEncarregados } = await supabase
-    .from("perfis")
-    .select("id, nome")
-    .eq("papel", "encarregado");
   const nomeEncarregado = new Map(
     (perfisEncarregados ?? []).map((p) => [p.id, p.nome]),
   );
 
-  const { data: autorizacoes } =
+  const criancaIds = (criancas ?? []).map((c) => c.id);
+
+  // Grupo 2: todas dependem só de `criancas`, já disponível — correm
+  // em paralelo entre si.
+  const [avatares, { data: autorizacoes }, { data: documentos }] = await Promise.all([
+    assinarAvatares(
+      supabase,
+      (criancas ?? []).map((c) => c.foto_caminho),
+    ),
     criancaIds.length > 0
-      ? await supabase
+      ? supabase
           .from("autorizacoes_recolha")
           .select("id, crianca_id, nome, parentesco, telefone")
           .in("crianca_id", criancaIds)
           .order("nome")
-      : { data: [] };
-
-  const { data: documentos } =
+      : Promise.resolve({ data: [] }),
     criancaIds.length > 0
-      ? await supabase
+      ? supabase
           .from("documentos_crianca")
           .select("id, crianca_id, caminho, nome_ficheiro, criado_em")
           .in("crianca_id", criancaIds)
           .order("criado_em", { ascending: false })
-      : { data: [] };
+      : Promise.resolve({ data: [] }),
+  ]);
 
   return (
     <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">

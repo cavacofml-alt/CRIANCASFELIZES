@@ -58,13 +58,11 @@ export default async function PainelPage() {
     );
   }
 
-  const { data: escola } = await supabase
-    .from("escolas")
-    .select("nome")
-    .maybeSingle();
-
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
+  const [{ data: escola }, { avisos: contagemAvisos, mensagens: contagemMensagens }] =
+    await Promise.all([
+      supabase.from("escolas").select("nome").maybeSingle(),
+      contarNotificacoesPorTipo(),
+    ]);
 
   const cabecalho = (
     <header className="flex items-start justify-between gap-4">
@@ -353,15 +351,10 @@ export default async function PainelPage() {
   // =====================================================================
   const hoje = hojeISO();
 
-  const { data: turmas } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .order("nome");
-
-  const { data: criancas } = await supabase
-    .from("criancas")
-    .select("id, turma_id")
-    .order("nome");
+  const [{ data: turmas }, { data: criancas }] = await Promise.all([
+    supabase.from("turmas").select("id, nome").order("nome"),
+    supabase.from("criancas").select("id, turma_id").order("nome"),
+  ]);
 
   const idsCriancas = (criancas ?? []).map((c) => c.id);
   const { data: presencasHoje } = idsCriancas.length

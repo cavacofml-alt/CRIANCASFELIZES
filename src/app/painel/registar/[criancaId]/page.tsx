@@ -31,29 +31,30 @@ export default async function RegistarCriancaPage({
   if (!perfil) redirect("/painel");
   if (perfil.papel === "encarregado") redirect("/painel");
 
-  const { data: crianca } = await supabase
-    .from("criancas")
-    .select("id, nome, turma_id, foto_caminho")
-    .eq("id", criancaId)
-    .maybeSingle();
+  const hoje = hojeISO();
+
+  // Nenhuma destas depende das outras — só do `criancaId` do URL.
+  const [{ data: crianca }, { data: relatorio }, notificacoes] = await Promise.all([
+    supabase
+      .from("criancas")
+      .select("id, nome, turma_id, foto_caminho")
+      .eq("id", criancaId)
+      .maybeSingle(),
+    supabase
+      .from("relatorios_diarios")
+      .select(
+        "id, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas, notas",
+      )
+      .eq("crianca_id", criancaId)
+      .eq("data", hoje)
+      .maybeSingle(),
+    contarNotificacoesPorTipo(),
+  ]);
   if (!crianca) notFound();
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
 
   const avatares = await assinarAvatares(supabase, [crianca.foto_caminho]);
   const fotoUrl = crianca.foto_caminho ? (avatares.get(crianca.foto_caminho) ?? null) : null;
-
-  const hoje = hojeISO();
-
-  const { data: relatorio } = await supabase
-    .from("relatorios_diarios")
-    .select(
-      "id, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas, notas",
-    )
-    .eq("crianca_id", criancaId)
-    .eq("data", hoje)
-    .maybeSingle();
-
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
 
   return (
     <main className="min-h-screen bg-brand-bg px-4 py-10 dark:bg-brand-bg-dark">

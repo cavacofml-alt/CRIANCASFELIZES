@@ -30,31 +30,29 @@ export default async function RegistarPage() {
 
   const hoje = hojeISO();
 
-  const { data: turmas } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .order("nome");
-
-  const { data: criancas } = await supabase
-    .from("criancas")
-    .select("id, nome, turma_id, foto_caminho")
-    .order("nome");
+  const [{ data: turmas }, { data: criancas }, { data: presencasHoje }, notificacoes] =
+    await Promise.all([
+      supabase.from("turmas").select("id, nome").order("nome"),
+      supabase
+        .from("criancas")
+        .select("id, nome, turma_id, foto_caminho")
+        .order("nome"),
+      supabase
+        .from("presencas")
+        .select("crianca_id, hora_entrada, hora_saida")
+        .eq("data", hoje),
+      contarNotificacoesPorTipo(),
+    ]);
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
 
   const avatares = await assinarAvatares(
     supabase,
     (criancas ?? []).map((c) => c.foto_caminho),
   );
 
-  const { data: presencasHoje } = await supabase
-    .from("presencas")
-    .select("crianca_id, hora_entrada, hora_saida")
-    .eq("data", hoje);
   const presencaPorCrianca = new Map(
     (presencasHoje ?? []).map((p) => [p.crianca_id, p]),
   );
-
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
 
   const grupos = (turmas ?? [])
     .map((t) => ({

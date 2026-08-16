@@ -21,26 +21,25 @@ export default async function ConversaPage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: perfil } = await supabase
-    .from("perfis")
-    .select("id, nome, papel, escola_id")
-    .eq("id", user.id)
-    .maybeSingle();
+  // Nenhuma destas três depende das outras — só do `user.id` ou do
+  // `contactoId` do URL, ambos já disponíveis.
+  const [{ data: perfil }, { data: contacto }, { data: mensagens }] =
+    await Promise.all([
+      supabase
+        .from("perfis")
+        .select("id, nome, papel, escola_id")
+        .eq("id", user.id)
+        .maybeSingle(),
+      // Se o RLS não deixar ver este perfil, não é um contacto válido.
+      supabase.from("perfis").select("id, nome").eq("id", contactoId).maybeSingle(),
+      supabase
+        .from("mensagens")
+        .select("id, remetente_id, destinatario_id, corpo, lida_em, criado_em")
+        .or(`remetente_id.eq.${contactoId},destinatario_id.eq.${contactoId}`)
+        .order("criado_em", { ascending: true }),
+    ]);
   if (!perfil) redirect("/painel");
-
-  // Se o RLS não deixar ver este perfil, não é um contacto válido.
-  const { data: contacto } = await supabase
-    .from("perfis")
-    .select("id, nome")
-    .eq("id", contactoId)
-    .maybeSingle();
   if (!contacto) redirect("/painel/mensagens");
-
-  const { data: mensagens } = await supabase
-    .from("mensagens")
-    .select("id, remetente_id, destinatario_id, corpo, lida_em, criado_em")
-    .or(`remetente_id.eq.${contactoId},destinatario_id.eq.${contactoId}`)
-    .order("criado_em", { ascending: true });
 
   // Marca como lidas as mensagens recebidas ainda por ler nesta conversa,
   // e as notificações associadas a elas (só destas, não de outras conversas).

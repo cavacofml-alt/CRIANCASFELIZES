@@ -22,28 +22,28 @@ export default async function PresencasPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: perfil } = await supabase
-    .from("perfis")
-    .select("id, nome, papel, escola_id")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: perfil }, notificacoes] = await Promise.all([
+    supabase
+      .from("perfis")
+      .select("id, nome, papel, escola_id")
+      .eq("id", user.id)
+      .maybeSingle(),
+    contarNotificacoesPorTipo(),
+  ]);
   if (!perfil) redirect("/painel");
-
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
 
   if (perfil.papel === "encarregado") {
-    const { data: historico } = await supabase
-      .from("presencas")
-      .select(
-        "id, crianca_id, data, hora_entrada, hora_saida, levantado_por_nome",
-      )
-      .order("data", { ascending: false })
-      .limit(14);
-
-    const { data: criancas } = await supabase
-      .from("criancas")
-      .select("id, nome");
+    const [{ data: historico }, { data: criancas }] = await Promise.all([
+      supabase
+        .from("presencas")
+        .select(
+          "id, crianca_id, data, hora_entrada, hora_saida, levantado_por_nome",
+        )
+        .order("data", { ascending: false })
+        .limit(14),
+      supabase.from("criancas").select("id, nome"),
+    ]);
     const nomeCrianca = new Map((criancas ?? []).map((c) => [c.id, c.nome]));
 
     return (
@@ -107,38 +107,34 @@ export default async function PresencasPage() {
   // Admin e staff: registar entradas/saídas de hoje.
   const hoje = hojeISO();
 
-  const { data: turmas } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .order("nome");
-
-  const { data: criancas } = await supabase
-    .from("criancas")
-    .select("id, nome, turma_id, foto_caminho")
-    .order("nome");
+  const [
+    { data: turmas },
+    { data: criancas },
+    { data: presencasHoje },
+    { data: ligacoes },
+    { data: encarregadosPerfis },
+  ] = await Promise.all([
+    supabase.from("turmas").select("id, nome").order("nome"),
+    supabase
+      .from("criancas")
+      .select("id, nome, turma_id, foto_caminho")
+      .order("nome"),
+    supabase
+      .from("presencas")
+      .select("id, crianca_id, hora_entrada, hora_saida, levantado_por_nome")
+      .eq("data", hoje),
+    supabase.from("encarregados_criancas").select("crianca_id, encarregado_id"),
+    supabase.from("perfis").select("id, nome").eq("papel", "encarregado"),
+  ]);
 
   const avatares = await assinarAvatares(
     supabase,
     (criancas ?? []).map((c) => c.foto_caminho),
   );
 
-  const { data: presencasHoje } = await supabase
-    .from("presencas")
-    .select("id, crianca_id, hora_entrada, hora_saida, levantado_por_nome")
-    .eq("data", hoje);
-
   const presencaPorCrianca = new Map(
     (presencasHoje ?? []).map((p) => [p.crianca_id, p]),
   );
-
-  const { data: ligacoes } = await supabase
-    .from("encarregados_criancas")
-    .select("crianca_id, encarregado_id");
-
-  const { data: encarregadosPerfis } = await supabase
-    .from("perfis")
-    .select("id, nome")
-    .eq("papel", "encarregado");
 
   const nomeEncarregado = new Map(
     (encarregadosPerfis ?? []).map((e) => [e.id, e.nome]),

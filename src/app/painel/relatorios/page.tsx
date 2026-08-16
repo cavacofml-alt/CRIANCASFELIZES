@@ -27,28 +27,28 @@ export default async function RelatoriosPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: perfil } = await supabase
-    .from("perfis")
-    .select("id, nome, papel, escola_id")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: perfil }, notificacoes] = await Promise.all([
+    supabase
+      .from("perfis")
+      .select("id, nome, papel, escola_id")
+      .eq("id", user.id)
+      .maybeSingle(),
+    contarNotificacoesPorTipo(),
+  ]);
   if (!perfil) redirect("/painel");
-
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
 
   if (perfil.papel === "encarregado") {
-    const { data: historico } = await supabase
-      .from("relatorios_diarios")
-      .select(
-        "id, crianca_id, data, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas, notas",
-      )
-      .order("data", { ascending: false })
-      .limit(14);
-
-    const { data: criancas } = await supabase
-      .from("criancas")
-      .select("id, nome");
+    const [{ data: historico }, { data: criancas }] = await Promise.all([
+      supabase
+        .from("relatorios_diarios")
+        .select(
+          "id, crianca_id, data, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas, notas",
+        )
+        .order("data", { ascending: false })
+        .limit(14),
+      supabase.from("criancas").select("id, nome"),
+    ]);
     const nomeCrianca = new Map((criancas ?? []).map((c) => [c.id, c.nome]));
 
     return (
@@ -146,22 +146,17 @@ export default async function RelatoriosPage() {
   // Admin e staff: preencher/editar o relatório de hoje.
   const hoje = hojeISO();
 
-  const { data: turmas } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .order("nome");
-
-  const { data: criancas } = await supabase
-    .from("criancas")
-    .select("id, nome, turma_id")
-    .order("nome");
-
-  const { data: relatoriosHoje } = await supabase
-    .from("relatorios_diarios")
-    .select(
-      "id, crianca_id, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas, notas",
-    )
-    .eq("data", hoje);
+  const [{ data: turmas }, { data: criancas }, { data: relatoriosHoje }] =
+    await Promise.all([
+      supabase.from("turmas").select("id, nome").order("nome"),
+      supabase.from("criancas").select("id, nome, turma_id").order("nome"),
+      supabase
+        .from("relatorios_diarios")
+        .select(
+          "id, crianca_id, pequeno_almoco, almoco, lanche, sono_inicio, sono_fim, fraldas_trocadas, notas",
+        )
+        .eq("data", hoje),
+    ]);
 
   const relatorioPorCrianca = new Map(
     (relatoriosHoje ?? []).map((r) => [r.crianca_id, r]),

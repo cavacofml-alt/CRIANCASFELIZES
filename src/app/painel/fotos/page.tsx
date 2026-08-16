@@ -39,21 +39,28 @@ export default async function FotosPage({
     .maybeSingle();
   if (!perfil) redirect("/painel");
 
-  const { avisos: contagemAvisos, mensagens: contagemMensagens } =
-    await contarNotificacoesPorTipo();
+  const podeEnviar = perfil.papel === "admin" || perfil.papel === "staff";
 
-  const { data: turmas } = await supabase
-    .from("turmas")
-    .select("id, nome")
-    .order("nome");
+  // Nenhuma destas cinco consultas depende das outras — correm todas
+  // em paralelo em vez de em sequência.
+  const [notificacoes, { data: turmas }, { data: fotos }, { data: autores }, { data: criancas }] =
+    await Promise.all([
+      contarNotificacoesPorTipo(),
+      supabase.from("turmas").select("id, nome").order("nome"),
+      supabase
+        .from("fotos")
+        .select("id, turma_id, caminho, legenda, autor_id, criado_em")
+        .order("criado_em", { ascending: false }),
+      supabase.from("perfis").select("id, nome"),
+      podeEnviar
+        ? supabase
+            .from("criancas")
+            .select("id, nome, turma_id, consentimento_fotos")
+            .order("nome")
+        : Promise.resolve({ data: [] }),
+    ]);
+  const { avisos: contagemAvisos, mensagens: contagemMensagens } = notificacoes;
   const nomeTurma = new Map((turmas ?? []).map((t) => [t.id, t.nome]));
-
-  const { data: fotos } = await supabase
-    .from("fotos")
-    .select("id, turma_id, caminho, legenda, autor_id, criado_em")
-    .order("criado_em", { ascending: false });
-
-  const { data: autores } = await supabase.from("perfis").select("id, nome");
   const nomeAutor = new Map((autores ?? []).map((a) => [a.id, a.nome]));
 
   let urlPorCaminho = new Map<string, string>();
@@ -70,15 +77,6 @@ export default async function FotosPage({
         .map((a) => [a.path ?? "", a.signedUrl]),
     );
   }
-
-  const podeEnviar = perfil.papel === "admin" || perfil.papel === "staff";
-
-  const { data: criancas } = podeEnviar
-    ? await supabase
-        .from("criancas")
-        .select("id, nome, turma_id, consentimento_fotos")
-        .order("nome")
-    : { data: [] };
 
   const hoje = hojeISO();
   const ontem = new Date(`${hoje}T12:00:00`);
